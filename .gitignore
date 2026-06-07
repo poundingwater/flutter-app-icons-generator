@@ -1,0 +1,21 @@
+# Dart/Pub
+.dart_tool/
+.packages
+pubspec.lock
+build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+
+# Generated
+*.g.dart
+*.mocks.dart
