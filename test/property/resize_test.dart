@@ -1,4 +1,4 @@
-// Feature: flutter-app-icons, Property 6: Resize Produces Exact Target Dimensions
+// Feature: flutter-app-icons-generator, Property 6: Resize Produces Exact Target Dimensions
 //
 // For any source image with dimensions >= 1024x1024 and any target size
 // (tw, th) where 1 <= tw <= source_width and 1 <= th <= source_height,
@@ -94,8 +94,7 @@ void main() {
     final processor = DefaultImageProcessor();
 
     Glados(any.resizeTestCase, ExploreConfig(numRuns: 100))
-        .test('resize output has exactly the requested dimensions',
-            (testCase) {
+        .test('resize output has exactly the requested dimensions', (testCase) {
       // Create a source image with the generated dimensions.
       final source = img.Image(
         width: testCase.sourceWidth,
@@ -111,13 +110,11 @@ void main() {
 
       // Verify exact target dimensions.
       expect(result.width, equals(testCase.targetWidth),
-          reason:
-              'Output width should be exactly ${testCase.targetWidth}, '
+          reason: 'Output width should be exactly ${testCase.targetWidth}, '
               'got ${result.width} '
               '(source: ${testCase.sourceWidth}x${testCase.sourceHeight})');
       expect(result.height, equals(testCase.targetHeight),
-          reason:
-              'Output height should be exactly ${testCase.targetHeight}, '
+          reason: 'Output height should be exactly ${testCase.targetHeight}, '
               'got ${result.height} '
               '(source: ${testCase.sourceWidth}x${testCase.sourceHeight})');
     });

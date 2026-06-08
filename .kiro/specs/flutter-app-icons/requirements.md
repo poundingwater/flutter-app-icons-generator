@@ -2,14 +2,14 @@
 
 ## Introduction
 
-`flutter_app_icons` is an open-source Dart CLI package that generates platform-specific app icons and native splash screens for Flutter projects. It reads a `flutter_app_icons.yml` configuration file and produces correctly sized, optimized, standards-compliant assets for iOS, Android, macOS, Linux, Windows, and Web. The package replaces existing icon assets with freshly generated ones to guarantee a clean, consistent result across all platforms.
+`flutter_app_icons_generator` is an open-source Dart CLI package that generates platform-specific app icons and native splash screens for Flutter projects. It reads a `flutter_app_icons_generator.yml` configuration file and produces correctly sized, optimized, standards-compliant assets for iOS, Android, macOS, Linux, Windows, and Web. The package replaces existing icon assets with freshly generated ones to guarantee a clean, consistent result across all platforms.
 
 The project follows a feature-first architecture for clean organization and scalability. It is published as an open-source package with proper documentation, licensing, and contribution guidelines.
 
 ## Glossary
 
-- **CLI**: The command-line interface executable provided by the `flutter_app_icons` package, invoked via `dart run flutter_app_icons` or as a standalone executable.
-- **Config_File**: The `flutter_app_icons.yml` YAML file located at the root of a Flutter project, defining source image paths, platform targets, and splash screen settings.
+- **CLI**: The command-line interface executable provided by the `flutter_app_icons_generator` package, invoked via `dart run flutter_app_icons_generator` or as a standalone executable.
+- **Config_File**: The `flutter_app_icons_generator.yml` YAML file located at the root of a Flutter project, defining source image paths, platform targets, and splash screen settings.
 - **Source_Image**: A PNG or JPEG image file referenced in the Config_File, used as the input for icon or splash generation.
 - **Foreground_Image**: A Source_Image representing the foreground layer of an adaptive icon (Android) or the primary icon content.
 - **Background_Image**: A Source_Image or solid color value representing the background layer of an adaptive icon (Android).
@@ -34,7 +34,7 @@ The project follows a feature-first architecture for clean organization and scal
 
 #### Acceptance Criteria
 
-1. WHEN the CLI is invoked, THE Config_Parser SHALL locate and read the `flutter_app_icons.yml` file from the Flutter project root directory.
+1. WHEN the CLI is invoked, THE Config_Parser SHALL locate and read the `flutter_app_icons_generator.yml` file from the Flutter project root directory.
 2. WHEN the Config_File contains a `foreground` image path and a `background` field (image path or hex color string), THE Config_Parser SHALL parse both values as the Adaptive_Icon layer sources.
 3. WHEN the Config_File contains a single `icon` image path instead of separate layers, THE Config_Parser SHALL parse the path as a Combined_Image source.
 4. WHEN the Config_File contains a `splash` image path, THE Config_Parser SHALL parse the path as the Native_Splash source.
@@ -50,9 +50,9 @@ The project follows a feature-first architecture for clean organization and scal
 
 #### Acceptance Criteria
 
-1. WHEN the CLI is invoked with the `--init` flag, THE CLI SHALL generate a default `flutter_app_icons.yml` file in the project root directory.
+1. WHEN the CLI is invoked with the `--init` flag, THE CLI SHALL generate a default `flutter_app_icons_generator.yml` file in the project root directory.
 2. WHEN the `--init` flag generates the Config_File, THE Config_Printer SHALL include a header comment block explaining each configuration field, supported values, and usage examples for improved developer experience.
-3. IF a `flutter_app_icons.yml` file already exists when `--init` is invoked, THEN THE CLI SHALL exit with error code 1 and display a message indicating the file already exists.
+3. IF a `flutter_app_icons_generator.yml` file already exists when `--init` is invoked, THEN THE CLI SHALL exit with error code 1 and display a message indicating the file already exists.
 4. FOR ALL valid Config_File objects, parsing the file with the Config_Parser and then printing the result with the Config_Printer SHALL produce a semantically equivalent configuration (round-trip property).
 
 ### Requirement 3: Source Image Validation

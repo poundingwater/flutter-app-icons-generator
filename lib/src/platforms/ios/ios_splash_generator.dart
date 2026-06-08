@@ -80,7 +80,7 @@ class IosSplashGenerator implements SplashGenerator {
         },
       ],
       'info': {
-        'author': 'flutter_app_icons',
+        'author': 'flutter_app_icons_generator',
         'version': 1,
       },
     };

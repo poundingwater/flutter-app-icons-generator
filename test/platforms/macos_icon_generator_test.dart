@@ -98,7 +98,7 @@ void main() {
 
       // Verify info section.
       final info = contents['info'] as Map<String, dynamic>;
-      expect(info['author'], equals('flutter_app_icons'));
+      expect(info['author'], equals('flutter_app_icons_generator'));
       expect(info['version'], equals(1));
 
       // Verify images section has 10 entries.

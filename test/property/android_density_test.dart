@@ -1,4 +1,4 @@
-// Feature: flutter-app-icons, Property 5: Android Density Bucket Completeness
+// Feature: flutter-app-icons-generator, Property 5: Android Density Bucket Completeness
 //
 // For any valid source image and Android icon configuration (combined image),
 // the Android icon generator SHALL produce exactly one icon file per density
@@ -107,10 +107,12 @@ void main() {
           expect(decoded, isNotNull,
               reason: 'Icon at $bucket should be a valid PNG');
           expect(decoded!.width, equals(expectedSize),
-              reason: 'Icon at $bucket should be ${expectedSize}x$expectedSize, '
+              reason:
+                  'Icon at $bucket should be ${expectedSize}x$expectedSize, '
                   'got ${decoded.width}x${decoded.height}');
           expect(decoded.height, equals(expectedSize),
-              reason: 'Icon at $bucket should be ${expectedSize}x$expectedSize, '
+              reason:
+                  'Icon at $bucket should be ${expectedSize}x$expectedSize, '
                   'got ${decoded.width}x${decoded.height}');
 
           generatedFiles.add(outputPath);

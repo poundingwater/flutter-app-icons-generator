@@ -1,4 +1,4 @@
-# Contributing to flutter_app_icons
+# Contributing to flutter_app_icons_generator
 
 Thank you for your interest in contributing! This document provides guidelines and instructions for contributing to the project.
 
@@ -14,8 +14,8 @@ Thank you for your interest in contributing! This document provides guidelines a
 1. Fork and clone the repository:
 
 ```bash
-git clone https://github.com/your-username/flutter-app-icons.git
-cd flutter-app-icons
+git clone https://github.com/your-username/flutter-app-icons-generator.git
+cd flutter-app-icons-generator
 ```
 
 2. Install dependencies:
@@ -33,16 +33,16 @@ dart test
 4. Run the CLI locally:
 
 ```bash
-dart run flutter_app_icons --help
+dart run flutter_app_icons_generator --help
 ```
 
 ## Project Structure
 
 ```
-flutter_app_icons/
+flutter-app-icons-generator/
 ├── bin/                          # CLI entry point
 ├── lib/
-│   ├── flutter_app_icons.dart   # Public barrel file
+│   ├── flutter_app_icons_generator.dart   # Public barrel file
 │   └── src/
 │       ├── cli/                 # CLI runner and logger
 │       ├── config/              # Config parsing and printing

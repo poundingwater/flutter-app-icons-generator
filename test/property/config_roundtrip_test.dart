@@ -1,4 +1,4 @@
-// Feature: flutter-app-icons, Property 1: Configuration Round-Trip
+// Feature: flutter-app-icons-generator, Property 1: Configuration Round-Trip
 //
 // For any valid AppIconsConfig object, printing the config to YAML with
 // the ConfigPrinter and then parsing the result with the ConfigParser
@@ -176,7 +176,8 @@ void main() {
       final yamlOutput = printer.print(config);
 
       // Write YAML to temp file
-      final configFile = File('${tempDir.path}/flutter_app_icons_generator.yml');
+      final configFile =
+          File('${tempDir.path}/flutter_app_icons_generator.yml');
       configFile.writeAsStringSync(yamlOutput);
 
       // Parse the YAML back

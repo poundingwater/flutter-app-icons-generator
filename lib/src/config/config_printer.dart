@@ -86,7 +86,7 @@ class YamlConfigPrinter implements ConfigPrinter {
     return '''# flutter_app_icons_generator.yml
 # Configuration for flutter_app_icons_generator icon and splash screen generator.
 #
-# For documentation, see: https://github.com/poundingwater/flutter-app-icons
+# For documentation, see: https://github.com/poundingwater/flutter-app-icons-generator
 
 # Icon configuration (required)
 # Use either 'image' for a single source, or 'foreground'/'background' for adaptive icons

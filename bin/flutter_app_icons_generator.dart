@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_app_icons_generator/src/cli/cli_runner.dart';
 
-/// CLI entry point for flutter_app_icons.
+/// CLI entry point for flutter_app_icons_generator.
 ///
 /// Generates platform-specific app icons and native splash screens
 /// for Flutter projects from a YAML configuration file.

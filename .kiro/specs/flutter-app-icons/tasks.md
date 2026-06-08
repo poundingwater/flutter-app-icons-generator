@@ -1,8 +1,8 @@
-# Implementation Plan: flutter-app-icons
+# Implementation Plan: flutter-app-icons-generator
 
 ## Overview
 
-Build a Dart CLI package (`flutter_app_icons`) from scratch that generates platform-specific app icons and native splash screens for Flutter projects. The implementation follows a pipeline architecture (parse → validate → clean → generate → update → report) with feature-first module organization. Each task builds incrementally toward the full CLI, starting with project scaffolding, then core logic, then platform-specific generators, and finally integration wiring.
+Build a Dart CLI package (`flutter_app_icons_generator`) from scratch that generates platform-specific app icons and native splash screens for Flutter projects. The implementation follows a pipeline architecture (parse → validate → clean → generate → update → report) with feature-first module organization. Each task builds incrementally toward the full CLI, starting with project scaffolding, then core logic, then platform-specific generators, and finally integration wiring.
 
 ## Tasks
 
@@ -10,8 +10,8 @@ Build a Dart CLI package (`flutter_app_icons`) from scratch that generates platf
   - [x] 1.1 Initialize Dart package with pubspec.yaml, directory structure, and dependencies
     - Create `pubspec.yaml` with package metadata, `image`, `yaml`, `args` dependencies, and `test`, `glados`, `mockito`, `build_runner` dev dependencies
     - Create directory structure: `bin/`, `lib/src/cli/`, `lib/src/config/`, `lib/src/core/`, `lib/src/platforms/{android,ios,macos,web,linux,windows}/`, `lib/src/shared/`, `test/property/`, `test/config/`, `test/core/`, `test/platforms/`
-    - Create `bin/flutter_app_icons.dart` entry point
-    - Create `lib/flutter_app_icons.dart` barrel file
+    - Create `bin/flutter_app_icons_generator.dart` entry point
+    - Create `lib/flutter_app_icons_generator.dart` barrel file
     - Create `README.md`, `LICENSE` (MIT), `CHANGELOG.md`, `CONTRIBUTING.md`
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.6_
 
@@ -37,7 +37,7 @@ Build a Dart CLI package (`flutter_app_icons`) from scratch that generates platf
 
   - [x] 2.2 Implement ConfigParser (YAML parsing and validation)
     - Create `lib/src/config/config_parser.dart`
-    - Parse `flutter_app_icons.yml` from project root
+    - Parse `flutter_app_icons_generator.yml` from project root
     - Handle adaptive icon config (foreground + background), combined image, splash config, and platform list
     - Throw appropriate exceptions for missing file, invalid YAML, missing required fields
     - Default to all platforms when `platforms` field is omitted
@@ -256,8 +256,8 @@ Build a Dart CLI package (`flutter_app_icons`) from scratch that generates platf
     - Skip splash generation if not configured (log informational message)
     - _Requirements: 1.7, 2.1, 2.3, 13.7, 14.1, 14.2, 14.3, 14.4_
 
-  - [x] 10.3 Wire bin/flutter_app_icons.dart entry point to CLI Runner
-    - Update `bin/flutter_app_icons.dart` to instantiate dependencies and call `CliRunner.run()`
+  - [x] 10.3 Wire bin/flutter_app_icons_generator.dart entry point to CLI Runner
+    - Update `bin/flutter_app_icons_generator.dart` to instantiate dependencies and call `CliRunner.run()`
     - _Requirements: 1.1_
 
 - [x] 11. Checkpoint - Ensure full pipeline integration works
@@ -271,7 +271,7 @@ Build a Dart CLI package (`flutter_app_icons`) from scratch that generates platf
     - _Requirements: 1.1, 7.3, 8.1, 9.1, 10.1, 11.1, 12.1, 14.2_
 
   - [x] 12.2 Verify barrel exports and public API
-    - Ensure `lib/flutter_app_icons.dart` exports all necessary public types
+    - Ensure `lib/flutter_app_icons_generator.dart` exports all necessary public types
     - Verify `pubspec.yaml` has correct `executables` configuration for CLI activation
     - Run `dart analyze` to ensure no lint issues
     - _Requirements: 16.5, 16.6_

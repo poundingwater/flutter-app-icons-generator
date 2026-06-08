@@ -1,4 +1,4 @@
-// Feature: flutter-app-icons, Property 2: Image Dimension Validation
+// Feature: flutter-app-icons-generator, Property 2: Image Dimension Validation
 //
 // For any image with width `w` and height `h`, the image validation function
 // SHALL accept the image if and only if `w >= 1024` AND `h >= 1024`. Images

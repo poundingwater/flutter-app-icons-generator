@@ -1,4 +1,4 @@
-// Feature: flutter-app-icons, Property 4: Lossless PNG Compression Preserves Pixels
+// Feature: flutter-app-icons-generator, Property 4: Lossless PNG Compression Preserves Pixels
 //
 // For any image, encoding it to PNG with lossless compression and then
 // decoding the resulting bytes SHALL produce an image that is pixel-identical

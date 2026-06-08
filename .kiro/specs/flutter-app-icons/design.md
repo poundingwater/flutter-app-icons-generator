@@ -1,8 +1,8 @@
-# Design Document: flutter-app-icons
+# Design Document: flutter-app-icons-generator
 
 ## Overview
 
-`flutter_app_icons` is a Dart CLI tool that generates platform-specific app icons and native splash screens for Flutter projects. It reads a `flutter_app_icons.yml` configuration file and produces correctly sized, optimized, standards-compliant assets for iOS, Android, macOS, Linux, Windows, and Web.
+`flutter_app_icons_generator` is a Dart CLI tool that generates platform-specific app icons and native splash screens for Flutter projects. It reads a `flutter_app_icons_generator.yml` configuration file and produces correctly sized, optimized, standards-compliant assets for iOS, Android, macOS, Linux, Windows, and Web.
 
 The tool follows a pipeline architecture:
 
@@ -74,8 +74,8 @@ sequenceDiagram
     participant PlatformUpdater
     participant Logger
 
-    User->>CLI: dart run flutter_app_icons
-    CLI->>ConfigParser: parse(flutter_app_icons.yml)
+    User->>CLI: dart run flutter_app_icons_generator
+    CLI->>ConfigParser: parse(flutter_app_icons_generator.yml)
     ConfigParser-->>CLI: AppIconsConfig
     CLI->>Validator: validate(config.sourceImages)
     Validator-->>CLI: validated images
@@ -93,11 +93,11 @@ sequenceDiagram
 ### Project Directory Structure
 
 ```
-flutter_app_icons/
+flutter-app-icons-generator/
 ├── bin/
-│   └── flutter_app_icons.dart          # CLI entry point
+│   └── flutter_app_icons_generator.dart          # CLI entry point
 ├── lib/
-│   ├── flutter_app_icons.dart          # Public library barrel
+│   ├── flutter_app_icons_generator.dart          # Public library barrel
 │   └── src/
 │       ├── cli/
 │       │   ├── cli_runner.dart         # Argument parsing & orchestration
@@ -188,7 +188,7 @@ Reads and validates the YAML configuration file.
 
 ```dart
 abstract class ConfigParser {
-  /// Parses the flutter_app_icons.yml file and returns a validated config.
+  /// Parses the flutter_app_icons_generator.yml file and returns a validated config.
   /// Throws [ConfigNotFoundException] if the file doesn't exist.
   /// Throws [ConfigParseException] if YAML is invalid.
   /// Throws [ConfigValidationException] if required fields are missing.
@@ -328,7 +328,7 @@ abstract class Logger {
 
 ### AppIconsConfig
 
-The root configuration model parsed from `flutter_app_icons.yml`.
+The root configuration model parsed from `flutter_app_icons_generator.yml`.
 
 ```dart
 class AppIconsConfig {
@@ -491,7 +491,7 @@ class WindowsSizes {
 ### YAML Configuration File Schema
 
 ```yaml
-# flutter_app_icons.yml
+# flutter_app_icons_generator.yml
 
 # Icon configuration (required)
 icon:
@@ -579,7 +579,7 @@ The CLI uses a fail-fast approach for configuration and validation errors, and a
 ### Custom Exception Types
 
 ```dart
-/// Base exception for all flutter_app_icons errors.
+/// Base exception for all flutter_app_icons_generator errors.
 sealed class AppIconsException implements Exception {
   String get message;
   int get exitCode => 1;
@@ -688,7 +688,7 @@ Each correctness property maps to one property-based test, configured for minimu
 Each test is tagged with a comment referencing the design property:
 
 ```dart
-// Feature: flutter-app-icons, Property 1: Configuration Round-Trip
+// Feature: flutter-app-icons-generator, Property 1: Configuration Round-Trip
 ```
 
 #### 2. Unit Tests (via `package:test`)
@@ -721,7 +721,7 @@ dev_dependencies:
 
 - Minimum **100 iterations** per property test (configured via `Glados` explore count)
 - Each property test must reference its design document property in a comment tag
-- Tag format: `// Feature: flutter-app-icons, Property {N}: {title}`
+- Tag format: `// Feature: flutter-app-icons-generator, Property {N}: {title}`
 - Custom `Arbitrary` instances for `AppIconsConfig`, `IconConfig`, `BackgroundConfig`, `SplashConfig`, and `Platform` enum subsets
 
 ### Test Execution

@@ -89,7 +89,7 @@ class IosIconGenerator implements IconGenerator {
         },
       ],
       'info': {
-        'author': 'flutter_app_icons',
+        'author': 'flutter_app_icons_generator',
         'version': 1,
       },
     };

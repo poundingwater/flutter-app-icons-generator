@@ -77,7 +77,8 @@ class MacosIconGenerator implements IconGenerator {
       case BackgroundImage(imagePath: final path):
         background = await imageProcessor.loadAndValidate(path);
       case BackgroundColor(hexColor: final hex):
-        background = _createColorBackground(hex, foreground.width, foreground.height);
+        background =
+            _createColorBackground(hex, foreground.width, foreground.height);
     }
 
     return imageProcessor.composite(foreground, background);
@@ -136,7 +137,7 @@ class MacosIconGenerator implements IconGenerator {
     final contents = {
       'images': images,
       'info': {
-        'author': 'flutter_app_icons',
+        'author': 'flutter_app_icons_generator',
         'version': 1,
       },
     };

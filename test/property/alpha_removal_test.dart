@@ -1,4 +1,4 @@
-// Feature: flutter-app-icons, Property 3: Alpha Channel Removal Produces Opaque Output
+// Feature: flutter-app-icons-generator, Property 3: Alpha Channel Removal Produces Opaque Output
 //
 // For any RGBA image (with arbitrary pixel values including varying alpha),
 // applying the alpha removal function (compositing onto a white background)
