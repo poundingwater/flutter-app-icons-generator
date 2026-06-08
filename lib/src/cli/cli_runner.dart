@@ -134,19 +134,49 @@ class CliRunner {
     var totalFiles = 0;
     final errors = <PlatformGenerationException>[];
 
+    // Validate all source images exist BEFORE cleaning any assets.
+    for (final platform in config.platforms) {
+      final resolvedIcon = config.icon.resolve(platform);
+      if (resolvedIcon.foregroundPath == null) {
+        logger.fatalError(
+          'No icon source configured for ${platform.name}. '
+          'Set icon.all_platforms or icon.foreground in your config.',
+        );
+        return 1;
+      }
+      final foregroundFile = File(resolvedIcon.foregroundPath!);
+      if (!foregroundFile.existsSync()) {
+        logger.fatalError(
+          'Source image not found: ${resolvedIcon.foregroundPath}',
+        );
+        return 1;
+      }
+      if (resolvedIcon.background is BackgroundImage) {
+        final bgPath = (resolvedIcon.background! as BackgroundImage).imagePath;
+        final bgFile = File(bgPath);
+        if (!bgFile.existsSync()) {
+          logger.fatalError('Background image not found: $bgPath');
+          return 1;
+        }
+      }
+    }
+
     // Process each platform.
     for (final platform in config.platforms) {
       try {
         logger.platformStart(platform);
 
-        // Clean old assets.
+        // Clean old assets (safe — source images verified above).
         await _assetCleaner.clean(platform, projectRoot);
         logger.verbose('  Cleaned old assets for ${platform.name}');
+
+        // Resolve icon config for this platform.
+        final resolvedIcon = config.icon.resolve(platform);
 
         // Generate icons.
         final generator = _iconGenerators[platform];
         if (generator != null) {
-          await generator.generate(config.icon, projectRoot);
+          await generator.generate(resolvedIcon, projectRoot);
           logger.verbose('  Generated icons for ${platform.name}');
         }
 

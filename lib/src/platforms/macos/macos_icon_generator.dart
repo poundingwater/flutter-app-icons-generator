@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:image/image.dart' as img;
@@ -7,13 +6,12 @@ import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 import 'package:flutter_app_icons_generator/src/core/icon_generator.dart';
 import 'package:flutter_app_icons_generator/src/core/image_optimizer.dart';
 import 'package:flutter_app_icons_generator/src/core/image_processor.dart';
-import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 
-/// macOS icon generator that produces all required icon sizes and a
-/// `Contents.json` manifest for the Xcode asset catalog.
+/// macOS icon generator that produces an `AppIcon.icns` file.
 ///
-/// Generates icons at 16, 32, 64, 128, 256, 512, and 1024 pixels with
-/// no alpha channel, placed in the AppIcon.appiconset directory.
+/// Generates a single ICNS file containing all required icon sizes
+/// (16, 32, 64, 128, 256, 512, 1024) with no alpha channel, placed in
+/// the macOS Runner Assets directory.
 class MacosIconGenerator implements IconGenerator {
   /// Creates a [MacosIconGenerator] with the required dependencies.
   MacosIconGenerator({
@@ -24,18 +22,36 @@ class MacosIconGenerator implements IconGenerator {
   /// Image processor for loading, resizing, and alpha removal.
   final ImageProcessor imageProcessor;
 
-  /// Image optimizer for PNG encoding.
+  /// Image optimizer for ICNS encoding.
   final ImageOptimizer imageOptimizer;
 
   /// Output directory path relative to the project root.
   static const String outputPath =
       'macos/Runner/Assets.xcassets/AppIcon.appiconset';
 
-  @override
-  Future<void> generate(IconConfig config, String projectRoot) async {
-    final sourceImage = await _loadSourceImage(config);
+  /// The filename for the generated ICNS file.
+  static const String icnsFilename = 'app_icon.icns';
 
-    // Remove alpha channel only if the image has transparency.
+  @override
+  Future<void> generate(ResolvedIconConfig config, String projectRoot) async {
+    if (config.foregroundPath == null) {
+      throw ArgumentError(
+        'ResolvedIconConfig must have foregroundPath set.',
+      );
+    }
+
+    final foregroundImage =
+        await imageProcessor.loadAndValidate(config.foregroundPath!);
+
+    // Composite onto background if provided.
+    final img.Image sourceImage;
+    if (config.hasBackground) {
+      sourceImage = await _compositeImage(foregroundImage, config.background!);
+    } else {
+      sourceImage = foregroundImage;
+    }
+
+    // macOS requires no alpha channel.
     final opaqueImage = imageProcessor.hasTransparency(sourceImage)
         ? imageProcessor.removeAlpha(sourceImage)
         : sourceImage;
@@ -46,44 +62,53 @@ class MacosIconGenerator implements IconGenerator {
       outputDir.createSync(recursive: true);
     }
 
-    // Generate icon files at each required size.
-    for (final size in MacosSizes.sizes) {
-      final resized = imageProcessor.resize(opaqueImage, size, size);
-      final pngBytes = imageOptimizer.encodePng(resized);
-      final filename = _filenameForSize(size);
-      final file = File('${outputDir.path}/$filename');
-      file.writeAsBytesSync(pngBytes);
-    }
+    // Generate the ICNS file containing all required sizes.
+    final icnsBytes = imageOptimizer.encodeIcns(opaqueImage);
+    final icnsFile = File('${outputDir.path}/$icnsFilename');
+    icnsFile.writeAsBytesSync(icnsBytes);
 
-    // Generate the Contents.json manifest.
+    // Generate the Contents.json manifest pointing to the ICNS file.
     final contentsJson = _generateContentsJson();
     final contentsFile = File('${outputDir.path}/Contents.json');
     contentsFile.writeAsStringSync(contentsJson);
   }
 
-  /// Loads the source image from the config.
+  /// Composites the foreground onto the background with padding.
   ///
-  /// If the config has a combined [IconConfig.imagePath], uses that directly.
-  /// For adaptive configs, composites the foreground onto the background.
-  Future<img.Image> _loadSourceImage(IconConfig config) async {
-    if (config.imagePath != null) {
-      return imageProcessor.loadAndValidate(config.imagePath!);
-    }
+  /// Applies a content inset so the foreground doesn't fill edge-to-edge.
+  /// Uses the same 72/108 ratio as Android's safe zone for visual consistency
+  /// across platforms (~66.67% content, ~16.7% padding per side).
+  Future<img.Image> _compositeImage(
+    img.Image foreground,
+    BackgroundConfig background,
+  ) async {
+    final canvasSize = foreground.width;
 
-    // Adaptive icon: composite foreground onto background.
-    final foreground =
-        await imageProcessor.loadAndValidate(config.foregroundPath!);
-
-    final img.Image background;
-    switch (config.background!) {
+    final img.Image bgImage;
+    switch (background) {
       case BackgroundImage(imagePath: final path):
-        background = await imageProcessor.loadAndValidate(path);
+        bgImage = await imageProcessor.loadAndValidate(path);
       case BackgroundColor(hexColor: final hex):
-        background =
-            _createColorBackground(hex, foreground.width, foreground.height);
+        bgImage = _createColorBackground(hex, canvasSize, canvasSize);
     }
 
-    return imageProcessor.composite(foreground, background);
+    // Resize background to canvas size.
+    final resizedBg = imageProcessor.resize(bgImage, canvasSize, canvasSize);
+
+    // Scale foreground to 72/108 of canvas (safe zone ratio).
+    final contentSize = (canvasSize * 72) ~/ 108;
+    final resizedFg = imageProcessor.resize(
+      foreground,
+      contentSize,
+      contentSize,
+    );
+
+    // Create canvas with background, then overlay centered foreground.
+    final canvas = resizedBg.clone();
+    final offset = (canvasSize - contentSize) ~/ 2;
+    img.compositeImage(canvas, resizedFg, dstX: offset, dstY: offset);
+
+    return canvas;
   }
 
   /// Creates a solid color background image from a hex color string.
@@ -94,11 +119,11 @@ class MacosIconGenerator implements IconGenerator {
     return image;
   }
 
-  /// Parses a hex color string (e.g. "#4CAF50" or "4CAF50") to an [img.Color].
+  /// Parses a hex color string to an [img.Color].
   img.Color _parseHexColor(String hex) {
     var sanitized = hex.replaceFirst('#', '');
     if (sanitized.length == 6) {
-      sanitized = 'FF$sanitized'; // Add full opacity.
+      sanitized = 'FF$sanitized';
     }
     final value = int.parse(sanitized, radix: 16);
     final a = (value >> 24) & 0xFF;
@@ -108,53 +133,20 @@ class MacosIconGenerator implements IconGenerator {
     return img.ColorRgba8(r, g, b, a);
   }
 
-  /// Returns the filename for a given icon size.
-  String _filenameForSize(int size) => 'app_icon_$size.png';
-
-  /// Generates the Contents.json manifest for the macOS asset catalog.
+  /// Generates a minimal Contents.json that references the ICNS file.
   String _generateContentsJson() {
-    final images = <Map<String, String>>[];
-
-    // 16x16 @1x
-    images.add(_imageEntry(16, '1x', '16x16'));
-    // 16x16 @2x (32px)
-    images.add(_imageEntry(32, '2x', '16x16'));
-    // 32x32 @1x
-    images.add(_imageEntry(32, '1x', '32x32'));
-    // 32x32 @2x (64px)
-    images.add(_imageEntry(64, '2x', '32x32'));
-    // 128x128 @1x
-    images.add(_imageEntry(128, '1x', '128x128'));
-    // 128x128 @2x (256px)
-    images.add(_imageEntry(256, '2x', '128x128'));
-    // 256x256 @1x
-    images.add(_imageEntry(256, '1x', '256x256'));
-    // 256x256 @2x (512px)
-    images.add(_imageEntry(512, '2x', '256x256'));
-    // 512x512 @1x
-    images.add(_imageEntry(512, '1x', '512x512'));
-    // 512x512 @2x (1024px)
-    images.add(_imageEntry(1024, '2x', '512x512'));
-
-    final contents = {
-      'images': images,
-      'info': {
-        'author': 'flutter_app_icons_generator',
-        'version': 1,
-      },
-    };
-
-    const encoder = JsonEncoder.withIndent('  ');
-    return '${encoder.convert(contents)}\n';
+    return '''{
+  "images" : [
+    {
+      "filename" : "$icnsFilename",
+      "idiom" : "mac"
+    }
+  ],
+  "info" : {
+    "author" : "flutter_app_icons_generator",
+    "version" : 1
   }
-
-  /// Creates a single image entry for the Contents.json manifest.
-  Map<String, String> _imageEntry(int pixelSize, String scale, String size) {
-    return {
-      'filename': _filenameForSize(pixelSize),
-      'idiom': 'mac',
-      'scale': scale,
-      'size': size,
-    };
+}
+''';
   }
 }

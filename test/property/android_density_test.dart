@@ -80,8 +80,8 @@ void main() {
         final sourceFile = File('${tempDir.path}/source_icon.png');
         sourceFile.writeAsBytesSync(img.encodePng(sourceImage));
 
-        // Create a combined IconConfig pointing to the source image.
-        final config = IconConfig(imagePath: sourceFile.path);
+        // Create a ResolvedIconConfig pointing to the source image.
+        final config = ResolvedIconConfig(foregroundPath: sourceFile.path);
 
         // Run the Android generator.
         await generator.generate(config, tempDir.path);

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:image/image.dart' as img;
+
 import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 import 'package:flutter_app_icons_generator/src/core/default_image_optimizer.dart';
 import 'package:flutter_app_icons_generator/src/core/default_image_processor.dart';
@@ -10,13 +12,9 @@ import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 /// Generates iOS app icon assets.
 ///
 /// Produces a single 1024x1024 PNG (no alpha channel) and the corresponding
-/// `Contents.json` manifest for the Xcode asset catalog. The output conforms
-/// to the latest Xcode format using a universal idiom for iOS.
+/// `Contents.json` manifest for the Xcode asset catalog.
 class IosIconGenerator implements IconGenerator {
   /// Creates an [IosIconGenerator].
-  ///
-  /// Uses [DefaultImageProcessor] for image manipulation and
-  /// [DefaultImageOptimizer] for PNG encoding.
   IosIconGenerator({
     DefaultImageProcessor? imageProcessor,
     DefaultImageOptimizer? imageOptimizer,
@@ -34,19 +32,26 @@ class IosIconGenerator implements IconGenerator {
       'ios/Runner/Assets.xcassets/AppIcon.appiconset';
 
   @override
-  Future<void> generate(IconConfig config, String projectRoot) async {
-    // Determine the source image path.
-    final sourcePath = config.imagePath ?? config.foregroundPath;
-    if (sourcePath == null) {
+  Future<void> generate(ResolvedIconConfig config, String projectRoot) async {
+    if (config.foregroundPath == null) {
       throw ArgumentError(
-        'IconConfig must have either imagePath or foregroundPath set.',
+        'ResolvedIconConfig must have foregroundPath set.',
       );
     }
 
-    // Load and validate the source image.
-    final sourceImage = await _imageProcessor.loadAndValidate(sourcePath);
+    // Load the foreground image.
+    final foregroundImage =
+        await _imageProcessor.loadAndValidate(config.foregroundPath!);
 
-    // Remove alpha channel only if the image has transparency.
+    // Composite onto background if provided, otherwise use foreground directly.
+    final img.Image sourceImage;
+    if (config.hasBackground) {
+      sourceImage = await _compositeImage(foregroundImage, config.background!);
+    } else {
+      sourceImage = foregroundImage;
+    }
+
+    // iOS requires no alpha channel.
     final opaqueImage = _imageProcessor.hasTransparency(sourceImage)
         ? _imageProcessor.removeAlpha(sourceImage)
         : sourceImage;
@@ -77,9 +82,67 @@ class IosIconGenerator implements IconGenerator {
     contentsFile.writeAsStringSync(contentsJson);
   }
 
-  /// Generates the Contents.json manifest for the Xcode asset catalog.
+  /// Composites the foreground onto the background with padding.
   ///
-  /// Uses the latest format with a single universal 1024x1024 entry for iOS.
+  /// Applies a content inset so the foreground doesn't fill edge-to-edge.
+  /// Uses the same 72/108 ratio as Android's safe zone for visual consistency
+  /// across platforms (~66.67% content, ~16.7% padding per side).
+  Future<img.Image> _compositeImage(
+    img.Image foreground,
+    BackgroundConfig background,
+  ) async {
+    final canvasSize = foreground.width;
+
+    final img.Image bgImage;
+    switch (background) {
+      case BackgroundImage(imagePath: final path):
+        bgImage = await _imageProcessor.loadAndValidate(path);
+      case BackgroundColor(hexColor: final hex):
+        bgImage = _createColorBackground(hex, canvasSize, canvasSize);
+    }
+
+    // Resize background to canvas size.
+    final resizedBg = _imageProcessor.resize(bgImage, canvasSize, canvasSize);
+
+    // Scale foreground to 72/108 of canvas (safe zone ratio).
+    final contentSize = (canvasSize * 72) ~/ 108;
+    final resizedFg = _imageProcessor.resize(
+      foreground,
+      contentSize,
+      contentSize,
+    );
+
+    // Create canvas with background, then overlay centered foreground.
+    final canvas = resizedBg.clone();
+    final offset = (canvasSize - contentSize) ~/ 2;
+    img.compositeImage(canvas, resizedFg, dstX: offset, dstY: offset);
+
+    return canvas;
+  }
+
+  /// Creates a solid color background image from a hex color string.
+  img.Image _createColorBackground(String hexColor, int width, int height) {
+    final color = _parseHexColor(hexColor);
+    final image = img.Image(width: width, height: height, numChannels: 4);
+    img.fill(image, color: color);
+    return image;
+  }
+
+  /// Parses a hex color string to an [img.Color].
+  img.Color _parseHexColor(String hex) {
+    var sanitized = hex.replaceFirst('#', '');
+    if (sanitized.length == 6) {
+      sanitized = 'FF$sanitized';
+    }
+    final value = int.parse(sanitized, radix: 16);
+    final a = (value >> 24) & 0xFF;
+    final r = (value >> 16) & 0xFF;
+    final g = (value >> 8) & 0xFF;
+    final b = value & 0xFF;
+    return img.ColorRgba8(r, g, b, a);
+  }
+
+  /// Generates the Contents.json manifest for the Xcode asset catalog.
   String _generateContentsJson() {
     final contents = {
       'images': [

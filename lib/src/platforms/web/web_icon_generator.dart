@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:image/image.dart' as img;
+
 import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 import 'package:flutter_app_icons_generator/src/core/default_image_optimizer.dart';
 import 'package:flutter_app_icons_generator/src/core/default_image_processor.dart';
@@ -10,11 +12,14 @@ import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 /// and maskable icons.
 ///
 /// Produces the following files:
-/// - `web/favicon.png` (16x16)
+/// - `web/favicon.ico` (48x48 ICO)
 /// - `web/icons/Icon-192.png` (192x192)
 /// - `web/icons/Icon-512.png` (512x512)
 /// - `web/icons/Icon-maskable-192.png` (192x192)
 /// - `web/icons/Icon-maskable-512.png` (512x512)
+///
+/// Favicon uses the foreground image only (transparency preserved).
+/// PWA and maskable icons composite foreground onto background.
 class WebIconGenerator implements IconGenerator {
   /// Creates a [WebIconGenerator] with the given image processor and optimizer.
   WebIconGenerator({
@@ -33,20 +38,20 @@ class WebIconGenerator implements IconGenerator {
   /// The image processor used for loading and resizing images.
   final DefaultImageProcessor imageProcessor;
 
-  /// The image optimizer used for PNG encoding.
+  /// The image optimizer used for PNG/ICO encoding.
   final DefaultImageOptimizer imageOptimizer;
 
   @override
-  Future<void> generate(IconConfig config, String projectRoot) async {
-    final sourcePath = config.imagePath ?? config.foregroundPath;
-    if (sourcePath == null) {
+  Future<void> generate(ResolvedIconConfig config, String projectRoot) async {
+    if (config.foregroundPath == null) {
       throw ArgumentError(
-        'IconConfig must have either imagePath or foregroundPath set.',
+        'ResolvedIconConfig must have foregroundPath set.',
       );
     }
 
-    // Load and validate the source image.
-    final sourceImage = await imageProcessor.loadAndValidate(sourcePath);
+    // Load the foreground image.
+    final foregroundImage =
+        await imageProcessor.loadAndValidate(config.foregroundPath!);
 
     // Ensure output directories exist.
     final webDir = Directory('$projectRoot/web');
@@ -58,16 +63,25 @@ class WebIconGenerator implements IconGenerator {
       iconsDir.createSync(recursive: true);
     }
 
-    // Generate favicon.ico with multiple sizes for broad browser compatibility.
+    // Generate favicon.ico — uses foreground only (transparency preserved).
     final faviconBytes = imageOptimizer.encodeIco(
-      sourceImage,
+      foregroundImage,
       WebSizes.faviconSizes,
     );
     File('$projectRoot/web/favicon.ico').writeAsBytesSync(faviconBytes);
 
-    // Generate PWA icons.
+    // Composite foreground onto background for PWA/maskable icons.
+    final img.Image compositedImage;
+    if (config.hasBackground) {
+      compositedImage =
+          await _compositeImage(foregroundImage, config.background!);
+    } else {
+      compositedImage = foregroundImage;
+    }
+
+    // Generate PWA icons (composited).
     final pwaSmall = imageProcessor.resize(
-      sourceImage,
+      compositedImage,
       WebSizes.pwaSmall,
       WebSizes.pwaSmall,
     );
@@ -75,16 +89,16 @@ class WebIconGenerator implements IconGenerator {
     File('$projectRoot/web/icons/Icon-192.png').writeAsBytesSync(pwaSmallBytes);
 
     final pwaLarge = imageProcessor.resize(
-      sourceImage,
+      compositedImage,
       WebSizes.pwaLarge,
       WebSizes.pwaLarge,
     );
     final pwaLargeBytes = imageOptimizer.encodePng(pwaLarge);
     File('$projectRoot/web/icons/Icon-512.png').writeAsBytesSync(pwaLargeBytes);
 
-    // Generate maskable icons (same source, same resize — naming differentiates).
+    // Generate maskable icons (composited).
     final maskableSmall = imageProcessor.resize(
-      sourceImage,
+      compositedImage,
       WebSizes.maskableSmall,
       WebSizes.maskableSmall,
     );
@@ -93,12 +107,71 @@ class WebIconGenerator implements IconGenerator {
         .writeAsBytesSync(maskableSmallBytes);
 
     final maskableLarge = imageProcessor.resize(
-      sourceImage,
+      compositedImage,
       WebSizes.maskableLarge,
       WebSizes.maskableLarge,
     );
     final maskableLargeBytes = imageOptimizer.encodePng(maskableLarge);
     File('$projectRoot/web/icons/Icon-maskable-512.png')
         .writeAsBytesSync(maskableLargeBytes);
+  }
+
+  /// Composites the foreground onto the background with padding.
+  ///
+  /// Applies a content inset so the foreground doesn't fill edge-to-edge.
+  /// Uses the same 72/108 ratio as Android's safe zone for visual consistency.
+  Future<img.Image> _compositeImage(
+    img.Image foreground,
+    BackgroundConfig background,
+  ) async {
+    final canvasSize = foreground.width;
+
+    final img.Image bgImage;
+    switch (background) {
+      case BackgroundImage(imagePath: final path):
+        bgImage = await imageProcessor.loadAndValidate(path);
+      case BackgroundColor(hexColor: final hex):
+        bgImage = _createColorBackground(hex, canvasSize, canvasSize);
+    }
+
+    // Resize background to canvas size.
+    final resizedBg = imageProcessor.resize(bgImage, canvasSize, canvasSize);
+
+    // Scale foreground to 72/108 of canvas (safe zone ratio).
+    final contentSize = (canvasSize * 72) ~/ 108;
+    final resizedFg = imageProcessor.resize(
+      foreground,
+      contentSize,
+      contentSize,
+    );
+
+    // Create canvas with background, then overlay centered foreground.
+    final canvas = resizedBg.clone();
+    final offset = (canvasSize - contentSize) ~/ 2;
+    img.compositeImage(canvas, resizedFg, dstX: offset, dstY: offset);
+
+    return canvas;
+  }
+
+  /// Creates a solid color background image.
+  img.Image _createColorBackground(String hexColor, int width, int height) {
+    final color = _parseHexColor(hexColor);
+    final image = img.Image(width: width, height: height, numChannels: 4);
+    img.fill(image, color: color);
+    return image;
+  }
+
+  /// Parses a hex color string to an [img.Color].
+  img.Color _parseHexColor(String hex) {
+    var sanitized = hex.replaceFirst('#', '');
+    if (sanitized.length == 6) {
+      sanitized = 'FF$sanitized';
+    }
+    final value = int.parse(sanitized, radix: 16);
+    final a = (value >> 24) & 0xFF;
+    final r = (value >> 16) & 0xFF;
+    final g = (value >> 8) & 0xFF;
+    final b = value & 0xFF;
+    return img.ColorRgba8(r, g, b, a);
   }
 }

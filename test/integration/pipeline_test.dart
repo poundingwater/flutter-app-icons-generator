@@ -142,17 +142,16 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       // ===== Verify macOS icons =====
       final macosAssetPath =
           '${tempDir.path}/macos/Runner/Assets.xcassets/AppIcon.appiconset';
-      final macosSizes = [16, 32, 64, 128, 256, 512, 1024];
-      for (final size in macosSizes) {
-        final iconFile = File('$macosAssetPath/app_icon_$size.png');
-        expect(iconFile.existsSync(), isTrue,
-            reason: 'macOS app_icon_$size.png should exist');
+      final macosIcnsFile = File('$macosAssetPath/app_icon.icns');
+      expect(macosIcnsFile.existsSync(), isTrue,
+          reason: 'macOS app_icon.icns should exist');
 
-        final decoded = img.decodePng(iconFile.readAsBytesSync());
-        expect(decoded, isNotNull);
-        expect(decoded!.width, equals(size));
-        expect(decoded.height, equals(size));
-      }
+      // Verify ICNS magic bytes.
+      final icnsBytes = macosIcnsFile.readAsBytesSync();
+      expect(icnsBytes[0], 0x69); // 'i'
+      expect(icnsBytes[1], 0x63); // 'c'
+      expect(icnsBytes[2], 0x6E); // 'n'
+      expect(icnsBytes[3], 0x73); // 's'
 
       final macosContentsFile = File('$macosAssetPath/Contents.json');
       expect(macosContentsFile.existsSync(), isTrue,
@@ -160,12 +159,11 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
 
       // ===== Verify Web icons =====
       final webPath = '${tempDir.path}/web';
-      final faviconFile = File('$webPath/favicon.png');
+      final faviconFile = File('$webPath/favicon.ico');
       expect(faviconFile.existsSync(), isTrue,
-          reason: 'Web favicon.png should exist');
-      final faviconDecoded = img.decodePng(faviconFile.readAsBytesSync());
-      expect(faviconDecoded!.width, equals(16));
-      expect(faviconDecoded.height, equals(16));
+          reason: 'Web favicon.ico should exist');
+      // ICO file should be non-empty.
+      expect(faviconFile.readAsBytesSync().length, greaterThan(0));
 
       final webIcon192 = File('$webPath/icons/Icon-192.png');
       expect(webIcon192.existsSync(), isTrue,
@@ -217,11 +215,11 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       ).readAsStringSync();
       expect(manifestContent, contains('android:icon="@mipmap/ic_launcher"'));
 
-      // Web: index.html contains <link rel="icon" pointing to favicon.png
+      // Web: index.html contains <link rel="icon" pointing to favicon.ico
       final indexHtmlContent =
           File('${tempDir.path}/web/index.html').readAsStringSync();
       expect(indexHtmlContent, contains('rel="icon"'));
-      expect(indexHtmlContent, contains('favicon.png'));
+      expect(indexHtmlContent, contains('favicon.ico'));
 
       // Windows: Runner.rc references resources\app_icon.ico
       final runnerRcContent =

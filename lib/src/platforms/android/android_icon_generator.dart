@@ -11,7 +11,7 @@ import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 /// Android-specific icon generator.
 ///
 /// Produces standard launcher icons at all 5 density buckets and,
-/// when an adaptive icon configuration is present, generates foreground
+/// when a background is provided (adaptive icon), generates foreground
 /// layers at adaptive sizes plus the XML resource descriptor.
 class AndroidIconGenerator implements IconGenerator {
   /// Creates an [AndroidIconGenerator] with the given image processor
@@ -29,11 +29,11 @@ class AndroidIconGenerator implements IconGenerator {
   static const _resPath = 'android/app/src/main/res';
 
   @override
-  Future<void> generate(IconConfig config, String projectRoot) async {
+  Future<void> generate(ResolvedIconConfig config, String projectRoot) async {
     if (config.isAdaptive) {
       await _generateAdaptiveIcons(config, projectRoot);
-    } else if (config.imagePath != null) {
-      await _generateStandardIcons(config.imagePath!, projectRoot);
+    } else if (config.foregroundPath != null) {
+      await _generateStandardIcons(config.foregroundPath!, projectRoot);
     }
   }
 
@@ -67,15 +67,15 @@ class AndroidIconGenerator implements IconGenerator {
   /// Generates adaptive icons: standard launcher icons (composited),
   /// foreground layers, background layers (if image), and the XML descriptor.
   Future<void> _generateAdaptiveIcons(
-    IconConfig config,
+    ResolvedIconConfig config,
     String projectRoot,
   ) async {
     final foregroundImage =
         await _imageProcessor.loadAndValidate(config.foregroundPath!);
 
-    // Generate standard icons using a composited version (foreground on background).
+    // Generate standard icons using a composited version.
     final compositedImage =
-        await _createCompositedImage(foregroundImage, config, projectRoot);
+        await _createCompositedImage(foregroundImage, config);
     final opaqueComposited = _imageProcessor.hasTransparency(compositedImage)
         ? _imageProcessor.removeAlpha(compositedImage)
         : compositedImage;
@@ -96,13 +96,34 @@ class AndroidIconGenerator implements IconGenerator {
       outputFile.writeAsBytesSync(pngBytes);
     }
 
-    // Generate foreground at adaptive sizes.
+    // Generate foreground at adaptive sizes with safe-zone padding.
+    // Android adaptive icons use a 108dp canvas where only the center 72dp
+    // (66.67%) is the guaranteed visible "safe zone". The outer 18dp on each
+    // side is the parallax/crop area. We place the foreground within the safe
+    // zone so it doesn't get clipped by device masks.
     for (final entry in AndroidSizes.adaptiveSizes.entries) {
       final bucketDir = entry.key;
-      final size = entry.value;
+      final canvasSize = entry.value;
 
-      final resized = _imageProcessor.resize(foregroundImage, size, size);
-      final pngBytes = _imageOptimizer.encodePng(resized);
+      // The safe zone is 72/108 = 2/3 of the canvas.
+      final safeZoneSize = (canvasSize * 72) ~/ 108;
+
+      // Resize the foreground to fit within the safe zone.
+      final resizedForeground =
+          _imageProcessor.resize(foregroundImage, safeZoneSize, safeZoneSize);
+
+      // Create a transparent canvas at the full adaptive size.
+      final canvas = img.Image(
+        width: canvasSize,
+        height: canvasSize,
+        numChannels: 4,
+      );
+
+      // Center the foreground on the canvas (offset = 18dp scaled).
+      final offset = (canvasSize - safeZoneSize) ~/ 2;
+      img.compositeImage(canvas, resizedForeground, dstX: offset, dstY: offset);
+
+      final pngBytes = _imageOptimizer.encodePng(canvas);
 
       final outputDir = Directory('$projectRoot/$_resPath/$bucketDir');
       if (!outputDir.existsSync()) {
@@ -144,36 +165,45 @@ class AndroidIconGenerator implements IconGenerator {
     }
   }
 
-  /// Creates a composited image by layering the foreground onto the background.
+  /// Creates a composited image by layering the foreground onto the background
+  /// with safe-zone padding (72/108 ratio).
   Future<img.Image> _createCompositedImage(
     img.Image foregroundImage,
-    IconConfig config,
-    String projectRoot,
+    ResolvedIconConfig config,
   ) async {
+    final canvasSize = foregroundImage.width;
     final background = config.background!;
 
+    final img.Image bgImage;
     if (background is BackgroundImage) {
-      final bgImage =
-          await _imageProcessor.loadAndValidate(background.imagePath);
-      // Resize background to match foreground dimensions for compositing.
-      final resizedBg = _imageProcessor.resize(
-        bgImage,
-        foregroundImage.width,
-        foregroundImage.height,
-      );
-      return _imageProcessor.composite(foregroundImage, resizedBg);
+      bgImage = await _imageProcessor.loadAndValidate(background.imagePath);
     } else if (background is BackgroundColor) {
-      // Create a solid color background image.
-      final bgImage = _createColorBackground(
+      bgImage = _createColorBackground(
         background.hexColor,
-        foregroundImage.width,
-        foregroundImage.height,
+        canvasSize,
+        canvasSize,
       );
-      return _imageProcessor.composite(foregroundImage, bgImage);
+    } else {
+      return foregroundImage;
     }
 
-    // Fallback: return foreground as-is (should not happen with valid config).
-    return foregroundImage;
+    // Resize background to canvas size.
+    final resizedBg = _imageProcessor.resize(bgImage, canvasSize, canvasSize);
+
+    // Scale foreground to 72/108 of canvas (safe zone ratio).
+    final contentSize = (canvasSize * 72) ~/ 108;
+    final resizedFg = _imageProcessor.resize(
+      foregroundImage,
+      contentSize,
+      contentSize,
+    );
+
+    // Create canvas with background, then overlay centered foreground.
+    final canvas = resizedBg.clone();
+    final offset = (canvasSize - contentSize) ~/ 2;
+    img.compositeImage(canvas, resizedFg, dstX: offset, dstY: offset);
+
+    return canvas;
   }
 
   /// Creates a solid color image from a hex color string.
@@ -184,12 +214,10 @@ class AndroidIconGenerator implements IconGenerator {
     return image;
   }
 
-  /// Parses a hex color string (e.g., "#4CAF50" or "#FF4CAF50") into an
-  /// [img.Color].
+  /// Parses a hex color string into an [img.Color].
   img.Color _parseHexColor(String hexColor) {
     final hex = hexColor.replaceFirst('#', '');
 
-    // Handle 6-digit (RGB) and 8-digit (ARGB) hex strings.
     int r, g, b, a;
     if (hex.length == 6) {
       a = 255;
@@ -202,7 +230,6 @@ class AndroidIconGenerator implements IconGenerator {
       g = int.parse(hex.substring(4, 6), radix: 16);
       b = int.parse(hex.substring(6, 8), radix: 16);
     } else {
-      // Default to white if the hex string is invalid.
       r = 255;
       g = 255;
       b = 255;
@@ -212,8 +239,8 @@ class AndroidIconGenerator implements IconGenerator {
     return img.ColorRgba8(r, g, b, a);
   }
 
-  /// Generates the `mipmap-anydpi-v26/ic_launcher.xml` adaptive icon descriptor.
-  void _generateAdaptiveXml(IconConfig config, String projectRoot) {
+  /// Generates the adaptive icon XML descriptor.
+  void _generateAdaptiveXml(ResolvedIconConfig config, String projectRoot) {
     final outputDir = Directory('$projectRoot/$_resPath/mipmap-anydpi-v26');
     if (!outputDir.existsSync()) {
       outputDir.createSync(recursive: true);
@@ -248,7 +275,6 @@ class AndroidIconGenerator implements IconGenerator {
         : '#${background.hexColor}';
 
     if (colorsFile.existsSync()) {
-      // Update existing colors.xml — add or replace the color entry.
       final existingContent = colorsFile.readAsStringSync();
       final colorEntry =
           '    <color name="ic_launcher_background">$colorValue</color>';
@@ -266,7 +292,6 @@ class AndroidIconGenerator implements IconGenerator {
 
       colorsFile.writeAsStringSync(updatedContent);
     } else {
-      // Create a new colors.xml file.
       final xml = '''<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">$colorValue</color>
