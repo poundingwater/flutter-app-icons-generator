@@ -5,7 +5,6 @@ import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 import 'package:flutter_app_icons_generator/src/core/default_image_optimizer.dart';
 import 'package:flutter_app_icons_generator/src/core/default_image_processor.dart';
 import 'package:flutter_app_icons_generator/src/platforms/macos/macos_icon_generator.dart';
-import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
 
@@ -36,8 +35,8 @@ void main() {
   });
 
   group('MacosIconGenerator', () {
-    test('generates all required icon sizes', () async {
-      final config = IconConfig(imagePath: testImagePath);
+    test('generates app_icon.icns file', () async {
+      final config = ResolvedIconConfig(foregroundPath: testImagePath);
 
       await generator.generate(config, tempDir.path);
 
@@ -46,44 +45,37 @@ void main() {
       );
       expect(outputDir.existsSync(), isTrue);
 
-      for (final size in MacosSizes.sizes) {
-        final file = File('${outputDir.path}/app_icon_$size.png');
-        expect(file.existsSync(), isTrue, reason: 'Missing icon at size $size');
+      final icnsFile = File('${outputDir.path}/app_icon.icns');
+      expect(icnsFile.existsSync(), isTrue, reason: 'ICNS file should exist');
 
-        // Verify dimensions.
-        final decoded = img.decodePng(file.readAsBytesSync());
-        expect(decoded, isNotNull);
-        expect(decoded!.width, equals(size));
-        expect(decoded.height, equals(size));
-      }
+      // Verify ICNS file starts with "icns" magic bytes.
+      final bytes = icnsFile.readAsBytesSync();
+      expect(bytes.length, greaterThan(8));
+      expect(bytes[0], 0x69); // 'i'
+      expect(bytes[1], 0x63); // 'c'
+      expect(bytes[2], 0x6E); // 'n'
+      expect(bytes[3], 0x73); // 's'
     });
 
-    test('generates icons with no alpha channel', () async {
-      final config = IconConfig(imagePath: testImagePath);
+    test('generates ICNS with correct file size in header', () async {
+      final config = ResolvedIconConfig(foregroundPath: testImagePath);
 
       await generator.generate(config, tempDir.path);
 
       final outputDir = Directory(
         '${tempDir.path}/${MacosIconGenerator.outputPath}',
       );
+      final icnsFile = File('${outputDir.path}/app_icon.icns');
+      final bytes = icnsFile.readAsBytesSync();
 
-      for (final size in MacosSizes.sizes) {
-        final file = File('${outputDir.path}/app_icon_$size.png');
-        final decoded = img.decodePng(file.readAsBytesSync())!;
-
-        // Verify every pixel has full opacity.
-        for (final pixel in decoded) {
-          expect(
-            pixel.a,
-            equals(255),
-            reason: 'Alpha not removed at size $size',
-          );
-        }
-      }
+      // Read file size from header (bytes 4-7, big-endian).
+      final headerSize =
+          (bytes[4] << 24) | (bytes[5] << 16) | (bytes[6] << 8) | bytes[7];
+      expect(headerSize, equals(bytes.length));
     });
 
     test('generates valid Contents.json manifest', () async {
-      final config = IconConfig(imagePath: testImagePath);
+      final config = ResolvedIconConfig(foregroundPath: testImagePath);
 
       await generator.generate(config, tempDir.path);
 
@@ -101,61 +93,16 @@ void main() {
       expect(info['author'], equals('flutter_app_icons_generator'));
       expect(info['version'], equals(1));
 
-      // Verify images section has 10 entries.
+      // Verify images section references the ICNS file.
       final images = contents['images'] as List<dynamic>;
-      expect(images.length, equals(10));
-
-      // Verify all entries have correct idiom.
-      for (final entry in images) {
-        final image = entry as Map<String, dynamic>;
-        expect(image['idiom'], equals('mac'));
-        expect(image['filename'], isNotNull);
-        expect(image['scale'], isNotNull);
-        expect(image['size'], isNotNull);
-      }
-    });
-
-    test('Contents.json has correct scale and size mappings', () async {
-      final config = IconConfig(imagePath: testImagePath);
-
-      await generator.generate(config, tempDir.path);
-
-      final outputDir = Directory(
-        '${tempDir.path}/${MacosIconGenerator.outputPath}',
-      );
-      final contentsFile = File('${outputDir.path}/Contents.json');
-      final contents =
-          jsonDecode(contentsFile.readAsStringSync()) as Map<String, dynamic>;
-      final images = contents['images'] as List<dynamic>;
-
-      // Expected entries as specified in the task.
-      final expectedEntries = [
-        {'filename': 'app_icon_16.png', 'scale': '1x', 'size': '16x16'},
-        {'filename': 'app_icon_32.png', 'scale': '2x', 'size': '16x16'},
-        {'filename': 'app_icon_32.png', 'scale': '1x', 'size': '32x32'},
-        {'filename': 'app_icon_64.png', 'scale': '2x', 'size': '32x32'},
-        {'filename': 'app_icon_128.png', 'scale': '1x', 'size': '128x128'},
-        {'filename': 'app_icon_256.png', 'scale': '2x', 'size': '128x128'},
-        {'filename': 'app_icon_256.png', 'scale': '1x', 'size': '256x256'},
-        {'filename': 'app_icon_512.png', 'scale': '2x', 'size': '256x256'},
-        {'filename': 'app_icon_512.png', 'scale': '1x', 'size': '512x512'},
-        {'filename': 'app_icon_1024.png', 'scale': '2x', 'size': '512x512'},
-      ];
-
-      for (var i = 0; i < expectedEntries.length; i++) {
-        final actual = images[i] as Map<String, dynamic>;
-        final expected = expectedEntries[i];
-        expect(actual['filename'], equals(expected['filename']),
-            reason: 'Entry $i filename mismatch');
-        expect(actual['scale'], equals(expected['scale']),
-            reason: 'Entry $i scale mismatch');
-        expect(actual['size'], equals(expected['size']),
-            reason: 'Entry $i size mismatch');
-      }
+      expect(images.length, equals(1));
+      final image = images[0] as Map<String, dynamic>;
+      expect(image['filename'], equals('app_icon.icns'));
+      expect(image['idiom'], equals('mac'));
     });
 
     test('outputs to correct directory path', () async {
-      final config = IconConfig(imagePath: testImagePath);
+      final config = ResolvedIconConfig(foregroundPath: testImagePath);
 
       await generator.generate(config, tempDir.path);
 
@@ -171,7 +118,7 @@ void main() {
       final fgPath = '${tempDir.path}/foreground.png';
       File(fgPath).writeAsBytesSync(img.encodePng(foreground));
 
-      final config = IconConfig(
+      final config = ResolvedIconConfig(
         foregroundPath: fgPath,
         background: const BackgroundColor('#4CAF50'),
       );
@@ -183,11 +130,15 @@ void main() {
       );
       expect(outputDir.existsSync(), isTrue);
 
-      // Verify all icons were generated.
-      for (final size in MacosSizes.sizes) {
-        final file = File('${outputDir.path}/app_icon_$size.png');
-        expect(file.existsSync(), isTrue);
-      }
+      final icnsFile = File('${outputDir.path}/app_icon.icns');
+      expect(icnsFile.existsSync(), isTrue);
+
+      // Verify it's a valid ICNS file.
+      final bytes = icnsFile.readAsBytesSync();
+      expect(bytes[0], 0x69);
+      expect(bytes[1], 0x63);
+      expect(bytes[2], 0x6E);
+      expect(bytes[3], 0x73);
     });
   });
 }

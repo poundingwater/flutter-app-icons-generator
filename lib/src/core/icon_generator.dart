@@ -8,7 +8,8 @@ import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 abstract class IconGenerator {
   /// Generates all icon assets for this platform.
   ///
-  /// [config] contains the icon source paths and layer configuration.
+  /// [config] contains the resolved icon source for this specific platform
+  /// (foreground path + optional background after resolution).
   /// [projectRoot] is the root directory of the Flutter project.
-  Future<void> generate(IconConfig config, String projectRoot);
+  Future<void> generate(ResolvedIconConfig config, String projectRoot);
 }

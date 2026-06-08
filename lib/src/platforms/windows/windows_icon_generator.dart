@@ -11,8 +11,12 @@ import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 /// Generates a multi-size ICO file at
 /// `{projectRoot}/windows/runner/resources/app_icon.ico`
 /// containing embedded sizes: 16, 32, 48, 64, 128, 256.
+///
+/// Windows icons use the foreground image directly with transparency
+/// preserved — no background compositing is applied.
 class WindowsIconGenerator implements IconGenerator {
-  /// Creates a [WindowsIconGenerator] with the given image processor and optimizer.
+  /// Creates a [WindowsIconGenerator] with the given image processor
+  /// and optimizer.
   WindowsIconGenerator({
     DefaultImageProcessor? imageProcessor,
     DefaultImageOptimizer? imageOptimizer,
@@ -23,23 +27,20 @@ class WindowsIconGenerator implements IconGenerator {
   final DefaultImageOptimizer _imageOptimizer;
 
   @override
-  Future<void> generate(IconConfig config, String projectRoot) async {
-    final sourcePath = config.imagePath ?? config.foregroundPath;
-    if (sourcePath == null) {
+  Future<void> generate(ResolvedIconConfig config, String projectRoot) async {
+    if (config.foregroundPath == null) {
       throw ArgumentError(
-        'IconConfig must have either imagePath or foregroundPath set.',
+        'ResolvedIconConfig must have foregroundPath set.',
       );
     }
 
-    // Load and validate the source image.
-    final sourceImage = await _imageProcessor.loadAndValidate(sourcePath);
+    // Load the foreground image — keep transparency intact for Windows.
+    final sourceImage =
+        await _imageProcessor.loadAndValidate(config.foregroundPath!);
 
-    // Remove alpha channel (Windows icons have no alpha channel).
-    final opaqueImage = _imageProcessor.removeAlpha(sourceImage);
-
-    // Encode as ICO with all required sizes.
+    // Encode as ICO with all required sizes (transparency preserved).
     final icoBytes = _imageOptimizer.encodeIco(
-      opaqueImage,
+      sourceImage,
       WindowsSizes.icoSizes,
     );
 

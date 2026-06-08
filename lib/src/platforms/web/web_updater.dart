@@ -7,7 +7,7 @@ import 'package:flutter_app_icons_generator/src/core/platform_updater.dart';
 ///
 /// This updater modifies:
 /// - `web/manifest.json`: Sets the `icons` array with PWA icon entries
-/// - `web/index.html`: Ensures a `<link rel="icon">` tag references `favicon.png`
+/// - `web/index.html`: Ensures a `<link rel="icon">` tag references `favicon.ico`
 class WebUpdater implements PlatformUpdater {
   @override
   Future<void> update(String projectRoot) async {
@@ -96,10 +96,10 @@ class WebUpdater implements PlatformUpdater {
     );
 
     if (iconLinkRegex.hasMatch(content)) {
-      // Replace the existing tag's href with favicon.png.
+      // Replace the existing tag's href with favicon.ico.
       content = content.replaceAll(
         iconLinkRegex,
-        '<link rel="icon" type="image/png" href="favicon.png"/>',
+        '<link rel="icon" type="image/x-icon" href="favicon.ico"/>',
       );
     } else {
       // Insert the link tag inside <head>.
@@ -109,7 +109,7 @@ class WebUpdater implements PlatformUpdater {
       if (headMatch != null) {
         final insertPosition = headMatch.end;
         content = '${content.substring(0, insertPosition)}\n'
-            '  <link rel="icon" type="image/png" href="favicon.png"/>'
+            '  <link rel="icon" type="image/x-icon" href="favicon.ico"/>'
             '${content.substring(insertPosition)}';
       }
     }

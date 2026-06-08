@@ -53,17 +53,27 @@ class DefaultImageProcessor implements ImageProcessor {
       source,
       width: width,
       height: height,
-      interpolation: img.Interpolation.cubic,
+      interpolation: img.Interpolation.average,
     );
   }
 
   @override
+  bool hasTransparency(img.Image source) {
+    if (source.numChannels < 4) return false;
+    for (final pixel in source) {
+      if (pixel.a < 255) return true;
+    }
+    return false;
+  }
+
+  @override
   img.Image removeAlpha(img.Image source) {
-    // Create a white background image with the same dimensions.
+    // Create a white background image preserving the source format.
     final result = img.Image(
       width: source.width,
       height: source.height,
-      numChannels: 4,
+      format: source.format,
+      numChannels: source.numChannels,
     );
 
     // Fill with white.

@@ -10,6 +10,16 @@ import 'package:flutter_app_icons_generator/src/shared/exceptions.dart';
 /// Default config file name looked up in the project root.
 const String _configFileName = 'flutter_app_icons_generator.yml';
 
+/// Platform names that can appear as keys under the `icon` section.
+const Set<String> _platformKeys = {
+  'android',
+  'ios',
+  'macos',
+  'web',
+  'linux',
+  'windows',
+};
+
 /// Concrete implementation of [ConfigParser] that reads and validates
 /// a `flutter_app_icons_generator.yml` file using the `yaml` package.
 class YamlConfigParser implements ConfigParser {
@@ -59,7 +69,7 @@ class YamlConfigParser implements ConfigParser {
 
     if (!config.isValid) {
       throw ConfigValidationException([
-        'icon.image or icon.foreground + icon.background',
+        'icon.all_platforms or icon.foreground',
       ]);
     }
 
@@ -67,6 +77,12 @@ class YamlConfigParser implements ConfigParser {
   }
 
   /// Parses the `icon` section of the YAML config.
+  ///
+  /// Supports:
+  /// - `all_platforms` — single image fallback
+  /// - `foreground` + optional `background` — adaptive layers
+  /// - Platform keys (android, ios, etc.) — platform-specific overrides
+  /// - Legacy `image` key — treated as `all_platforms` for backward compat
   IconConfig _parseIconConfig(YamlMap yaml) {
     final iconNode = yaml['icon'];
     if (iconNode == null) {
@@ -76,25 +92,63 @@ class YamlConfigParser implements ConfigParser {
       throw ConfigParseException('Expected "icon" to be a map');
     }
 
-    final imagePath = iconNode['image'] as String?;
+    // Support legacy `image` key as alias for `all_platforms`.
+    final allPlatforms =
+        (iconNode['all_platforms'] ?? iconNode['image']) as String?;
     final foregroundPath = iconNode['foreground'] as String?;
     final backgroundValue = iconNode['background'];
 
     BackgroundConfig? background;
     if (backgroundValue != null) {
-      final bgStr = backgroundValue.toString();
-      if (bgStr.startsWith('#')) {
-        background = BackgroundColor(bgStr);
-      } else {
-        background = BackgroundImage(bgStr);
+      background = _parseBackground(backgroundValue);
+    }
+
+    // Parse platform-specific overrides.
+    final platformOverrides = <Platform, PlatformIconConfig>{};
+    for (final platformKey in _platformKeys) {
+      final platformNode = iconNode[platformKey];
+      if (platformNode == null) continue;
+
+      if (platformNode is! YamlMap) {
+        throw ConfigParseException(
+          'Expected "icon.$platformKey" to be a map',
+        );
       }
+
+      final platformForeground = platformNode['foreground'] as String?;
+      if (platformForeground == null) {
+        throw ConfigValidationException(['icon.$platformKey.foreground']);
+      }
+
+      final platformBgValue = platformNode['background'];
+      BackgroundConfig? platformBackground;
+      if (platformBgValue != null) {
+        platformBackground = _parseBackground(platformBgValue);
+      }
+
+      final platform = Platform.values.firstWhere((p) => p.name == platformKey);
+      platformOverrides[platform] = PlatformIconConfig(
+        foregroundPath: platformForeground,
+        background: platformBackground,
+      );
     }
 
     return IconConfig(
-      imagePath: imagePath,
+      allPlatforms: allPlatforms,
       foregroundPath: foregroundPath,
       background: background,
+      platformOverrides: platformOverrides,
     );
+  }
+
+  /// Parses a background value — either a hex color string or image path.
+  BackgroundConfig _parseBackground(dynamic value) {
+    final bgStr = value.toString();
+    if (bgStr.startsWith('#')) {
+      return BackgroundColor(bgStr);
+    } else {
+      return BackgroundImage(bgStr);
+    }
   }
 
   /// Parses the optional `splash` section of the YAML config.
@@ -118,11 +172,12 @@ class YamlConfigParser implements ConfigParser {
     );
   }
 
-  /// Parses the optional `platforms` list. Defaults to all platforms if omitted.
+  /// Parses the optional `platforms` list.
+  /// Defaults to android and ios if omitted.
   Set<Platform> _parsePlatforms(YamlMap yaml) {
     final platformsNode = yaml['platforms'];
     if (platformsNode == null) {
-      return Platform.values.toSet();
+      return const {Platform.android, Platform.ios};
     }
 
     if (platformsNode is! YamlList) {

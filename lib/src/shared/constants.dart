@@ -52,8 +52,8 @@ class MacosSizes {
 class WebSizes {
   WebSizes._();
 
-  /// Favicon size in pixels.
-  static const int faviconSize = 16;
+  /// Favicon sizes embedded in the ICO file for broad browser compatibility.
+  static const List<int> faviconSizes = [48];
 
   /// PWA small icon size.
   static const int pwaSmall = 192;

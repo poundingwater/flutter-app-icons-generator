@@ -8,10 +8,6 @@ class AppIconsConfig {
     this.platforms = const {
       Platform.android,
       Platform.ios,
-      Platform.macos,
-      Platform.web,
-      Platform.linux,
-      Platform.windows,
     },
   });
 
@@ -21,16 +17,15 @@ class AppIconsConfig {
   /// Splash screen configuration (optional).
   final SplashConfig? splash;
 
-  /// Target platforms. Defaults to all supported platforms.
+  /// Target platforms. Defaults to android and ios.
   final Set<Platform> platforms;
 
-  /// Validates that at least one icon source is provided.
+  /// Validates that the config has sufficient icon sources.
   ///
-  /// Returns `true` if the config has either a combined [IconConfig.imagePath]
-  /// or both [IconConfig.foregroundPath] and [IconConfig.background] set.
-  bool get isValid =>
-      icon.imagePath != null ||
-      (icon.foregroundPath != null && icon.background != null);
+  /// Valid when:
+  /// - [IconConfig.allPlatforms] is set, OR
+  /// - [IconConfig.foregroundPath] is set (background is optional)
+  bool get isValid => icon.allPlatforms != null || icon.foregroundPath != null;
 
   /// Creates a copy of this config with the given fields replaced.
   AppIconsConfig copyWith({
@@ -64,53 +59,144 @@ class AppIconsConfig {
 }
 
 /// Icon source configuration.
+///
+/// Supports three modes:
+/// 1. `all_platforms` — single image used everywhere (simplest)
+/// 2. `foreground` + `background` — adaptive layers, composited per platform
+/// 3. Platform-specific overrides — fine-grained control
+///
+/// Resolution order per platform:
+/// 1. Platform-specific override (if defined)
+/// 2. Top-level foreground/background
+/// 3. all_platforms fallback
 class IconConfig {
   const IconConfig({
-    this.imagePath,
+    this.allPlatforms,
     this.foregroundPath,
     this.background,
+    this.platformOverrides = const {},
   });
 
-  /// Combined image path (used when no separate layers).
-  final String? imagePath;
+  /// Single source image for all platforms (pre-composited).
+  final String? allPlatforms;
 
-  /// Foreground layer path (for adaptive icons).
+  /// Top-level foreground layer path.
   final String? foregroundPath;
 
-  /// Background layer — either an image path or hex color.
+  /// Top-level background — either an image path or hex color.
   final BackgroundConfig? background;
 
-  /// Returns true if this is an adaptive icon configuration.
+  /// Platform-specific overrides.
+  final Map<Platform, PlatformIconConfig> platformOverrides;
+
+  /// Returns true if this has adaptive layers at the top level.
   bool get isAdaptive => foregroundPath != null && background != null;
 
-  /// Creates a copy of this config with the given fields replaced.
-  IconConfig copyWith({
-    String? imagePath,
-    String? foregroundPath,
-    BackgroundConfig? background,
-  }) {
-    return IconConfig(
-      imagePath: imagePath ?? this.imagePath,
-      foregroundPath: foregroundPath ?? this.foregroundPath,
-      background: background ?? this.background,
+  /// Resolves the effective icon config for a given [platform].
+  ///
+  /// For platforms that need transparency (Windows), the package will
+  /// use foreground-only. For others, it composites foreground onto background.
+  ResolvedIconConfig resolve(Platform platform) {
+    // Check platform-specific override first.
+    final override = platformOverrides[platform];
+    if (override != null) {
+      return ResolvedIconConfig(
+        foregroundPath: override.foregroundPath,
+        background: override.background,
+      );
+    }
+
+    // Fall back to top-level foreground/background.
+    if (foregroundPath != null) {
+      return ResolvedIconConfig(
+        foregroundPath: foregroundPath,
+        background: background,
+      );
+    }
+
+    // Final fallback: all_platforms treated as foreground with no background.
+    return ResolvedIconConfig(
+      foregroundPath: allPlatforms,
+      background: null,
     );
   }
+
+  /// Legacy compatibility: returns imagePath equivalent.
+  /// Used by generators that expect the old IconConfig interface.
+  String? get imagePath => allPlatforms;
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! IconConfig) return false;
-    return imagePath == other.imagePath &&
+    return allPlatforms == other.allPlatforms &&
         foregroundPath == other.foregroundPath &&
+        background == other.background &&
+        _mapEquals(platformOverrides, other.platformOverrides);
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(allPlatforms, foregroundPath, background, platformOverrides);
+
+  @override
+  String toString() =>
+      'IconConfig(allPlatforms: $allPlatforms, foregroundPath: $foregroundPath, '
+      'background: $background, platformOverrides: $platformOverrides)';
+}
+
+/// Platform-specific icon configuration override.
+class PlatformIconConfig {
+  const PlatformIconConfig({
+    required this.foregroundPath,
+    this.background,
+  });
+
+  /// Platform-specific foreground image path.
+  final String foregroundPath;
+
+  /// Platform-specific background (optional).
+  /// If null, foreground is used as-is (transparency preserved).
+  final BackgroundConfig? background;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! PlatformIconConfig) return false;
+    return foregroundPath == other.foregroundPath &&
         background == other.background;
   }
 
   @override
-  int get hashCode => Object.hash(imagePath, foregroundPath, background);
+  int get hashCode => Object.hash(foregroundPath, background);
 
   @override
   String toString() =>
-      'IconConfig(imagePath: $imagePath, foregroundPath: $foregroundPath, background: $background)';
+      'PlatformIconConfig(foregroundPath: $foregroundPath, background: $background)';
+}
+
+/// Resolved icon configuration for a specific platform.
+///
+/// This is what generators receive after resolution:
+/// - If [background] is non-null, composite foreground onto background.
+/// - If [background] is null, use foreground as-is (preserve transparency).
+class ResolvedIconConfig {
+  const ResolvedIconConfig({
+    required this.foregroundPath,
+    this.background,
+  });
+
+  /// Path to the foreground/source image.
+  final String? foregroundPath;
+
+  /// Background config. Null means use foreground only (transparent).
+  final BackgroundConfig? background;
+
+  /// Whether this resolved config has a background to composite onto.
+  bool get hasBackground => background != null;
+
+  /// Whether this is an adaptive icon (foreground + background).
+  bool get isAdaptive => foregroundPath != null && background != null;
 }
 
 /// Background configuration for adaptive icons.
@@ -249,4 +335,13 @@ class SourceImage {
 bool _setEquals<T>(Set<T> a, Set<T> b) {
   if (a.length != b.length) return false;
   return a.containsAll(b);
+}
+
+/// Helper to compare two maps for equality.
+bool _mapEquals<K, V>(Map<K, V> a, Map<K, V> b) {
+  if (a.length != b.length) return false;
+  for (final key in a.keys) {
+    if (!b.containsKey(key) || a[key] != b[key]) return false;
+  }
+  return true;
 }

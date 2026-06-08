@@ -134,7 +134,7 @@ void main() {
       final updatedContent = indexFile.readAsStringSync();
       expect(
         updatedContent,
-        contains('<link rel="icon" type="image/png" href="favicon.png"/>'),
+        contains('<link rel="icon" type="image/x-icon" href="favicon.ico"/>'),
       );
       expect(updatedContent, isNot(contains('old-favicon.png')));
     });
@@ -159,7 +159,7 @@ void main() {
       final updatedContent = indexFile.readAsStringSync();
       expect(
         updatedContent,
-        contains('<link rel="icon" type="image/png" href="favicon.png"/>'),
+        contains('<link rel="icon" type="image/x-icon" href="favicon.ico"/>'),
       );
     });
 
@@ -193,7 +193,7 @@ void main() {
       final updatedContent = indexFile.readAsStringSync();
       expect(
         updatedContent,
-        contains('<link rel="icon" type="image/png" href="favicon.png"/>'),
+        contains('<link rel="icon" type="image/x-icon" href="favicon.ico"/>'),
       );
       expect(updatedContent, isNot(contains('old.ico')));
     });

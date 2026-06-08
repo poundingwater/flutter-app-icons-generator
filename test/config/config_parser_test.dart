@@ -118,25 +118,23 @@ icon:
         );
       });
 
-      test(
-          'throws ConfigValidationException when neither image nor '
-          'foreground+background provided', () {
+      test('allows foreground without background (transparent mode)', () async {
         writeConfig('''
 icon:
   foreground: assets/foreground.png
 ''');
-        expect(
-          () => parser.parse(tempDir.path),
-          throwsA(isA<ConfigValidationException>()),
-        );
+        final config = await parser.parse(tempDir.path);
+        expect(config.icon.foregroundPath, 'assets/foreground.png');
+        expect(config.icon.background, isNull);
+        expect(config.icon.isAdaptive, isFalse);
       });
 
       test(
-          'throws ConfigValidationException when foreground present '
-          'but no background', () {
+          'throws ConfigValidationException when neither all_platforms '
+          'nor foreground provided', () {
         writeConfig('''
 icon:
-  foreground: assets/foreground.png
+  background: "#FFFFFF"
 ''');
         expect(
           () => parser.parse(tempDir.path),
@@ -186,14 +184,14 @@ splash:
     });
 
     group('platforms', () {
-      test('defaults to all platforms when key is omitted', () async {
+      test('defaults to android and ios when key is omitted', () async {
         writeConfig('''
 icon:
   image: assets/icon.png
 ''');
         final config = await parser.parse(tempDir.path);
-        expect(config.platforms, Platform.values.toSet());
-        expect(config.platforms.length, 6);
+        expect(config.platforms, {Platform.android, Platform.ios});
+        expect(config.platforms.length, 2);
       });
 
       test('parses a subset of platforms', () async {

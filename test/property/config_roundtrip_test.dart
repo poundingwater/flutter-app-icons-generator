@@ -98,12 +98,12 @@ extension ConfigGenerators on Any {
   }
 
   /// Generates a valid IconConfig.
-  /// Either combined mode (imagePath set) or adaptive mode (foreground + background).
+  /// Either combined mode (allPlatforms set) or adaptive mode (foreground + background).
   Generator<IconConfig> get iconConfig {
     return either(
       // Combined image mode
       safePath.map(
-        (path) => IconConfig(imagePath: path),
+        (path) => IconConfig(allPlatforms: path),
       ),
       // Adaptive mode (foreground + background)
       combine2(
