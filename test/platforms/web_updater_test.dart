@@ -89,8 +89,7 @@ void main() {
       expect(content['display'], equals('standalone'));
     });
 
-    test('creates web directory and manifest.json if neither exist',
-        () async {
+    test('creates web directory and manifest.json if neither exist', () async {
       await updater.update(tempDir.path);
 
       final manifestFile = File('${tempDir.path}/web/manifest.json');

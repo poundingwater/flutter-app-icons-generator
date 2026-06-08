@@ -95,7 +95,7 @@ class LinuxUpdater implements PlatformUpdater {
       content = content.replaceFirst(
         windowShowPattern,
         '${windowShowPattern.firstMatch(content)!.group(0)}\n'
-            '  gtk_window_set_icon_from_file(GTK_WINDOW(window), "$_iconFileName", nullptr);',
+        '  gtk_window_set_icon_from_file(GTK_WINDOW(window), "$_iconFileName", nullptr);',
       );
       runnerFile.writeAsStringSync(content);
       return;

@@ -74,8 +74,7 @@ class WebIconGenerator implements IconGenerator {
       WebSizes.pwaSmall,
     );
     final pwaSmallBytes = imageOptimizer.encodePng(pwaSmall);
-    File('$projectRoot/web/icons/Icon-192.png')
-        .writeAsBytesSync(pwaSmallBytes);
+    File('$projectRoot/web/icons/Icon-192.png').writeAsBytesSync(pwaSmallBytes);
 
     final pwaLarge = imageProcessor.resize(
       sourceImage,
@@ -83,8 +82,7 @@ class WebIconGenerator implements IconGenerator {
       WebSizes.pwaLarge,
     );
     final pwaLargeBytes = imageOptimizer.encodePng(pwaLarge);
-    File('$projectRoot/web/icons/Icon-512.png')
-        .writeAsBytesSync(pwaLargeBytes);
+    File('$projectRoot/web/icons/Icon-512.png').writeAsBytesSync(pwaLargeBytes);
 
     // Generate maskable icons (same source, same resize — naming differentiates).
     final maskableSmall = imageProcessor.resize(

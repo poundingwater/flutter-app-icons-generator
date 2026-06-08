@@ -21,7 +21,8 @@ void main() {
 
   /// Helper to write a YAML config file in the temp directory.
   void writeConfig(String content) {
-    File('${tempDir.path}/flutter_app_icons_generator.yml').writeAsStringSync(content);
+    File('${tempDir.path}/flutter_app_icons_generator.yml')
+        .writeAsStringSync(content);
   }
 
   group('YamlConfigParser', () {
@@ -109,8 +110,7 @@ icon:
     });
 
     group('validation', () {
-      test('throws ConfigValidationException when icon section is missing',
-          () {
+      test('throws ConfigValidationException when icon section is missing', () {
         writeConfig('splash:\n  image: assets/splash.png');
         expect(
           () => parser.parse(tempDir.path),
@@ -171,8 +171,7 @@ splash:
         expect(config.splash!.backgroundColor, isNull);
       });
 
-      test('throws ConfigValidationException when splash.image is missing',
-          () {
+      test('throws ConfigValidationException when splash.image is missing', () {
         writeConfig('''
 icon:
   image: assets/icon.png

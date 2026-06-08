@@ -20,8 +20,7 @@ class MacosUpdater implements PlatformUpdater {
 
   @override
   Future<void> update(String projectRoot) async {
-    final pbxprojPath =
-        '$projectRoot/macos/Runner.xcodeproj/project.pbxproj';
+    final pbxprojPath = '$projectRoot/macos/Runner.xcodeproj/project.pbxproj';
     final file = File(pbxprojPath);
 
     // If the file doesn't exist, the macOS platform may not be initialized.

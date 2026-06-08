@@ -20,8 +20,7 @@ class IosUpdater implements PlatformUpdater {
 
   @override
   Future<void> update(String projectRoot) async {
-    final pbxprojPath =
-        '$projectRoot/ios/Runner.xcodeproj/project.pbxproj';
+    final pbxprojPath = '$projectRoot/ios/Runner.xcodeproj/project.pbxproj';
     final file = File(pbxprojPath);
 
     // If the file doesn't exist, the iOS platform may not be initialized.

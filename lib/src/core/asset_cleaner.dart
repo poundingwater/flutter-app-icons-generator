@@ -86,8 +86,7 @@ class DefaultAssetCleaner implements AssetCleaner {
 
   /// Deletes the Windows app icon.
   void _cleanWindows(String projectRoot) {
-    _deleteFileIfExists(
-        '$projectRoot/windows/runner/resources/app_icon.ico');
+    _deleteFileIfExists('$projectRoot/windows/runner/resources/app_icon.ico');
   }
 
   /// Deletes a file if it exists. Does nothing otherwise.

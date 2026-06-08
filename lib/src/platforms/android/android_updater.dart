@@ -8,8 +8,7 @@ import 'package:flutter_app_icons_generator/src/core/platform_updater.dart';
 /// as the application icon after icon generation.
 class AndroidUpdater implements PlatformUpdater {
   /// Path to `AndroidManifest.xml` relative to the project root.
-  static const _manifestPath =
-      'android/app/src/main/AndroidManifest.xml';
+  static const _manifestPath = 'android/app/src/main/AndroidManifest.xml';
 
   @override
   Future<void> update(String projectRoot) async {

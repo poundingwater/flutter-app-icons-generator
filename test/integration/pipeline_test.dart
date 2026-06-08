@@ -47,7 +47,8 @@ platforms:
   - linux
   - windows
 ''';
-    File('${tempDir.path}/flutter_app_icons_generator.yml').writeAsStringSync(config);
+    File('${tempDir.path}/flutter_app_icons_generator.yml')
+        .writeAsStringSync(config);
 
     // Create minimal AndroidManifest.xml with <application> tag.
     final androidManifestDir =
@@ -108,8 +109,7 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       };
 
       for (final entry in androidDensities.entries) {
-        final iconFile =
-            File('$androidResPath/${entry.key}/ic_launcher.png');
+        final iconFile = File('$androidResPath/${entry.key}/ic_launcher.png');
         expect(iconFile.existsSync(), isTrue,
             reason: 'Android ${entry.key}/ic_launcher.png should exist');
 
@@ -232,8 +232,8 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       final manifestJsonFile = File('${tempDir.path}/web/manifest.json');
       expect(manifestJsonFile.existsSync(), isTrue,
           reason: 'web/manifest.json should exist');
-      final manifestJson =
-          jsonDecode(manifestJsonFile.readAsStringSync()) as Map<String, dynamic>;
+      final manifestJson = jsonDecode(manifestJsonFile.readAsStringSync())
+          as Map<String, dynamic>;
       expect(manifestJson['icons'], isA<List>());
       expect((manifestJson['icons'] as List).length, greaterThan(0));
     });
@@ -248,7 +248,8 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       final exitCode = await runner.run(['--init', '-p', initDir.path]);
       expect(exitCode, equals(0));
 
-      final configFile = File('${initDir.path}/flutter_app_icons_generator.yml');
+      final configFile =
+          File('${initDir.path}/flutter_app_icons_generator.yml');
       expect(configFile.existsSync(), isTrue,
           reason: '--init should create flutter_app_icons_generator.yml');
 
