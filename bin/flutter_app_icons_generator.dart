@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter_app_icons/src/cli/cli_runner.dart';
+import 'package:flutter_app_icons_generator/src/cli/cli_runner.dart';
 
 /// CLI entry point for flutter_app_icons.
 ///

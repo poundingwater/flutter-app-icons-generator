@@ -1,9 +1,9 @@
-/// Flutter App Icons - Platform-specific app icon and splash screen generator.
+/// Flutter App Icons Generator - Platform-specific app icon and splash screen generator.
 ///
 /// A Dart CLI tool that generates correctly sized, optimized,
 /// standards-compliant icon and splash screen assets for iOS, Android,
 /// macOS, Linux, Windows, and Web from a single YAML configuration file.
-library flutter_app_icons;
+library flutter_app_icons_generator;
 
 // Core
 export 'src/core/asset_cleaner.dart';

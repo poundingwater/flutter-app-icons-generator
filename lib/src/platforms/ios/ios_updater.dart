@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter_app_icons/src/core/platform_updater.dart';
+import 'package:flutter_app_icons_generator/src/core/platform_updater.dart';
 
 /// Updates the iOS Xcode project to reference the `AppIcon` asset catalog entry.
 ///

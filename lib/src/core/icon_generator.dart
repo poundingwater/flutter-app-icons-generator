@@ -1,4 +1,4 @@
-import 'package:flutter_app_icons/src/config/config_model.dart';
+import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 
 /// Abstract interface for platform-specific icon generation.
 ///

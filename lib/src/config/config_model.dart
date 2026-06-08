@@ -1,6 +1,6 @@
-import 'package:flutter_app_icons/src/shared/constants.dart';
+import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 
-/// Root configuration model parsed from flutter_app_icons.yml.
+/// Root configuration model parsed from flutter_app_icons_generator.yml.
 class AppIconsConfig {
   const AppIconsConfig({
     required this.icon,
@@ -29,7 +29,8 @@ class AppIconsConfig {
   /// Returns `true` if the config has either a combined [IconConfig.imagePath]
   /// or both [IconConfig.foregroundPath] and [IconConfig.background] set.
   bool get isValid =>
-      icon.imagePath != null || (icon.foregroundPath != null && icon.background != null);
+      icon.imagePath != null ||
+      (icon.foregroundPath != null && icon.background != null);
 
   /// Creates a copy of this config with the given fields replaced.
   AppIconsConfig copyWith({
@@ -54,7 +55,8 @@ class AppIconsConfig {
   }
 
   @override
-  int get hashCode => Object.hash(icon, splash, Object.hashAllUnordered(platforms));
+  int get hashCode =>
+      Object.hash(icon, splash, Object.hashAllUnordered(platforms));
 
   @override
   String toString() =>

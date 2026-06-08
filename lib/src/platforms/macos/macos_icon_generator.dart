@@ -3,11 +3,11 @@ import 'dart:io';
 
 import 'package:image/image.dart' as img;
 
-import 'package:flutter_app_icons/src/config/config_model.dart';
-import 'package:flutter_app_icons/src/core/icon_generator.dart';
-import 'package:flutter_app_icons/src/core/image_optimizer.dart';
-import 'package:flutter_app_icons/src/core/image_processor.dart';
-import 'package:flutter_app_icons/src/shared/constants.dart';
+import 'package:flutter_app_icons_generator/src/config/config_model.dart';
+import 'package:flutter_app_icons_generator/src/core/icon_generator.dart';
+import 'package:flutter_app_icons_generator/src/core/image_optimizer.dart';
+import 'package:flutter_app_icons_generator/src/core/image_processor.dart';
+import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 
 /// macOS icon generator that produces all required icon sizes and a
 /// `Contents.json` manifest for the Xcode asset catalog.

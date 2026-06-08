@@ -1,5 +1,5 @@
-import 'package:flutter_app_icons/src/config/config_model.dart';
-import 'package:flutter_app_icons/src/shared/constants.dart';
+import 'package:flutter_app_icons_generator/src/config/config_model.dart';
+import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 
 /// Abstract interface for serializing configuration to YAML format.
 ///
@@ -61,8 +61,8 @@ class YamlConfigPrinter implements ConfigPrinter {
       buffer.writeln('splash:');
       buffer.writeln('  image: ${config.splash!.imagePath}');
       if (config.splash!.backgroundColor != null) {
-        buffer.writeln(
-            '  background_color: "${config.splash!.backgroundColor}"');
+        buffer
+            .writeln('  background_color: "${config.splash!.backgroundColor}"');
       }
     }
 
@@ -83,10 +83,10 @@ class YamlConfigPrinter implements ConfigPrinter {
 
   @override
   String printDefault() {
-    return '''# flutter_app_icons.yml
-# Configuration for flutter_app_icons icon and splash screen generator.
+    return '''# flutter_app_icons_generator.yml
+# Configuration for flutter_app_icons_generator icon and splash screen generator.
 #
-# For documentation, see: https://github.com/user/flutter_app_icons
+# For documentation, see: https://github.com/poundingwater/flutter-app-icons
 
 # Icon configuration (required)
 # Use either 'image' for a single source, or 'foreground'/'background' for adaptive icons

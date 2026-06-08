@@ -10,7 +10,7 @@
 
 import 'package:glados/glados.dart';
 import 'package:image/image.dart' as img;
-import 'package:flutter_app_icons/src/core/default_image_processor.dart';
+import 'package:flutter_app_icons_generator/src/core/default_image_processor.dart';
 
 /// Represents a test image with known pixel data for verification.
 class TestImage {

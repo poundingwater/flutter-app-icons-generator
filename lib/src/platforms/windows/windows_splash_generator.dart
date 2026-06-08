@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:flutter_app_icons/src/config/config_model.dart';
-import 'package:flutter_app_icons/src/core/image_optimizer.dart';
-import 'package:flutter_app_icons/src/core/image_processor.dart';
-import 'package:flutter_app_icons/src/core/splash_generator.dart';
+import 'package:flutter_app_icons_generator/src/config/config_model.dart';
+import 'package:flutter_app_icons_generator/src/core/image_optimizer.dart';
+import 'package:flutter_app_icons_generator/src/core/image_processor.dart';
+import 'package:flutter_app_icons_generator/src/core/splash_generator.dart';
 import 'package:image/image.dart' as img;
 
 /// Windows splash screen generator that produces a splash image resource

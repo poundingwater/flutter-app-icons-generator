@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_app_icons/src/cli/cli_runner.dart';
+import 'package:flutter_app_icons_generator/src/cli/cli_runner.dart';
 import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
 
@@ -35,7 +35,7 @@ void main() {
     final imagePath = '${tempDir.path}/assets/icon.png';
     createTestImage(imagePath);
 
-    // Write flutter_app_icons.yml config with absolute image path.
+    // Write flutter_app_icons_generator.yml config with absolute image path.
     final config = '''
 icon:
   image: $imagePath
@@ -47,7 +47,7 @@ platforms:
   - linux
   - windows
 ''';
-    File('${tempDir.path}/flutter_app_icons.yml').writeAsStringSync(config);
+    File('${tempDir.path}/flutter_app_icons_generator.yml').writeAsStringSync(config);
 
     // Create minimal AndroidManifest.xml with <application> tag.
     final androidManifestDir =
@@ -248,9 +248,9 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       final exitCode = await runner.run(['--init', '-p', initDir.path]);
       expect(exitCode, equals(0));
 
-      final configFile = File('${initDir.path}/flutter_app_icons.yml');
+      final configFile = File('${initDir.path}/flutter_app_icons_generator.yml');
       expect(configFile.existsSync(), isTrue,
-          reason: '--init should create flutter_app_icons.yml');
+          reason: '--init should create flutter_app_icons_generator.yml');
 
       // Verify config file has content.
       final content = configFile.readAsStringSync();
@@ -263,7 +263,7 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       addTearDown(() => initDir.deleteSync(recursive: true));
 
       // Create the config file first.
-      File('${initDir.path}/flutter_app_icons.yml')
+      File('${initDir.path}/flutter_app_icons_generator.yml')
           .writeAsStringSync('icon:\n  image: test.png\n');
 
       final runner = CliRunner();

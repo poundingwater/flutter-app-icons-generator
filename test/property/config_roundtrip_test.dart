@@ -9,10 +9,10 @@
 import 'dart:io';
 
 import 'package:glados/glados.dart';
-import 'package:flutter_app_icons/src/config/config_model.dart';
-import 'package:flutter_app_icons/src/config/config_printer.dart';
-import 'package:flutter_app_icons/src/config/yaml_config_parser.dart';
-import 'package:flutter_app_icons/src/shared/constants.dart';
+import 'package:flutter_app_icons_generator/src/config/config_model.dart';
+import 'package:flutter_app_icons_generator/src/config/config_printer.dart';
+import 'package:flutter_app_icons_generator/src/config/yaml_config_parser.dart';
+import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 
 /// Custom generators for the config domain types.
 extension ConfigGenerators on Any {
@@ -176,7 +176,7 @@ void main() {
       final yamlOutput = printer.print(config);
 
       // Write YAML to temp file
-      final configFile = File('${tempDir.path}/flutter_app_icons.yml');
+      final configFile = File('${tempDir.path}/flutter_app_icons_generator.yml');
       configFile.writeAsStringSync(yamlOutput);
 
       // Parse the YAML back

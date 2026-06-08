@@ -2,16 +2,16 @@ import 'dart:io';
 
 import 'package:yaml/yaml.dart';
 
-import 'package:flutter_app_icons/src/config/config_model.dart';
-import 'package:flutter_app_icons/src/config/config_parser.dart';
-import 'package:flutter_app_icons/src/shared/constants.dart';
-import 'package:flutter_app_icons/src/shared/exceptions.dart';
+import 'package:flutter_app_icons_generator/src/config/config_model.dart';
+import 'package:flutter_app_icons_generator/src/config/config_parser.dart';
+import 'package:flutter_app_icons_generator/src/shared/constants.dart';
+import 'package:flutter_app_icons_generator/src/shared/exceptions.dart';
 
 /// Default config file name looked up in the project root.
-const String _configFileName = 'flutter_app_icons.yml';
+const String _configFileName = 'flutter_app_icons_generator.yml';
 
 /// Concrete implementation of [ConfigParser] that reads and validates
-/// a `flutter_app_icons.yml` file using the `yaml` package.
+/// a `flutter_app_icons_generator.yml` file using the `yaml` package.
 class YamlConfigParser implements ConfigParser {
   /// Creates a [YamlConfigParser].
   const YamlConfigParser();

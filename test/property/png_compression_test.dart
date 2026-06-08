@@ -10,7 +10,7 @@ import 'dart:typed_data';
 
 import 'package:glados/glados.dart';
 import 'package:image/image.dart' as img;
-import 'package:flutter_app_icons/src/core/default_image_optimizer.dart';
+import 'package:flutter_app_icons_generator/src/core/default_image_optimizer.dart';
 
 /// Custom generator for small random images (4x4 to 32x32) with random RGBA pixels.
 extension ImageGenerators on Any {

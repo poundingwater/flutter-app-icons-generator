@@ -1,6 +1,6 @@
-import 'package:flutter_app_icons/src/shared/constants.dart';
+import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 
-/// Base exception for all flutter_app_icons errors.
+/// Base exception for all flutter_app_icons_generator errors.
 sealed class AppIconsException implements Exception {
   /// Human-readable error message.
   String get message;
@@ -47,8 +47,7 @@ class ConfigValidationException extends AppIconsException {
   final List<String> missingFields;
 
   @override
-  String get message =>
-      'Missing required fields: ${missingFields.join(", ")}';
+  String get message => 'Missing required fields: ${missingFields.join(", ")}';
 }
 
 /// Source image file not found.

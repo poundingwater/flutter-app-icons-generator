@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:flutter_app_icons/src/cli/logger.dart';
-import 'package:flutter_app_icons/src/shared/constants.dart';
+import 'package:flutter_app_icons_generator/src/cli/logger.dart';
+import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 
 /// Concrete implementation of [Logger] that writes to stdout/stderr.
 ///

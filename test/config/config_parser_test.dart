@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:flutter_app_icons/src/config/config_model.dart';
-import 'package:flutter_app_icons/src/config/yaml_config_parser.dart';
-import 'package:flutter_app_icons/src/shared/constants.dart';
-import 'package:flutter_app_icons/src/shared/exceptions.dart';
+import 'package:flutter_app_icons_generator/src/config/config_model.dart';
+import 'package:flutter_app_icons_generator/src/config/yaml_config_parser.dart';
+import 'package:flutter_app_icons_generator/src/shared/constants.dart';
+import 'package:flutter_app_icons_generator/src/shared/exceptions.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -21,7 +21,7 @@ void main() {
 
   /// Helper to write a YAML config file in the temp directory.
   void writeConfig(String content) {
-    File('${tempDir.path}/flutter_app_icons.yml').writeAsStringSync(content);
+    File('${tempDir.path}/flutter_app_icons_generator.yml').writeAsStringSync(content);
   }
 
   group('YamlConfigParser', () {

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_app_icons/src/core/platform_updater.dart';
+import 'package:flutter_app_icons_generator/src/core/platform_updater.dart';
 
 /// Updates web platform configuration files to reference generated icon assets.
 ///

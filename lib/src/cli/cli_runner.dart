@@ -2,41 +2,41 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 
-import 'package:flutter_app_icons/src/cli/console_logger.dart';
-import 'package:flutter_app_icons/src/cli/logger.dart';
-import 'package:flutter_app_icons/src/config/config_model.dart';
-import 'package:flutter_app_icons/src/config/config_parser.dart';
-import 'package:flutter_app_icons/src/config/config_printer.dart';
-import 'package:flutter_app_icons/src/config/yaml_config_parser.dart';
-import 'package:flutter_app_icons/src/core/asset_cleaner.dart';
-import 'package:flutter_app_icons/src/core/icon_generator.dart';
-import 'package:flutter_app_icons/src/core/platform_updater.dart';
-import 'package:flutter_app_icons/src/core/splash_generator.dart';
-import 'package:flutter_app_icons/src/core/default_image_optimizer.dart';
-import 'package:flutter_app_icons/src/core/default_image_processor.dart';
-import 'package:flutter_app_icons/src/platforms/android/android_icon_generator.dart';
-import 'package:flutter_app_icons/src/platforms/android/android_splash_generator.dart';
-import 'package:flutter_app_icons/src/platforms/android/android_updater.dart';
-import 'package:flutter_app_icons/src/platforms/ios/ios_icon_generator.dart';
-import 'package:flutter_app_icons/src/platforms/ios/ios_splash_generator.dart';
-import 'package:flutter_app_icons/src/platforms/ios/ios_updater.dart';
-import 'package:flutter_app_icons/src/platforms/linux/linux_icon_generator.dart';
-import 'package:flutter_app_icons/src/platforms/linux/linux_splash_generator.dart';
-import 'package:flutter_app_icons/src/platforms/linux/linux_updater.dart';
-import 'package:flutter_app_icons/src/platforms/macos/macos_icon_generator.dart';
-import 'package:flutter_app_icons/src/platforms/macos/macos_splash_generator.dart';
-import 'package:flutter_app_icons/src/platforms/macos/macos_updater.dart';
-import 'package:flutter_app_icons/src/platforms/web/web_icon_generator.dart';
-import 'package:flutter_app_icons/src/platforms/web/web_splash_generator.dart';
-import 'package:flutter_app_icons/src/platforms/web/web_updater.dart';
-import 'package:flutter_app_icons/src/platforms/windows/windows_icon_generator.dart';
-import 'package:flutter_app_icons/src/platforms/windows/windows_splash_generator.dart';
-import 'package:flutter_app_icons/src/platforms/windows/windows_updater.dart';
-import 'package:flutter_app_icons/src/shared/constants.dart';
-import 'package:flutter_app_icons/src/shared/exceptions.dart';
+import 'package:flutter_app_icons_generator/src/cli/console_logger.dart';
+import 'package:flutter_app_icons_generator/src/cli/logger.dart';
+import 'package:flutter_app_icons_generator/src/config/config_model.dart';
+import 'package:flutter_app_icons_generator/src/config/config_parser.dart';
+import 'package:flutter_app_icons_generator/src/config/config_printer.dart';
+import 'package:flutter_app_icons_generator/src/config/yaml_config_parser.dart';
+import 'package:flutter_app_icons_generator/src/core/asset_cleaner.dart';
+import 'package:flutter_app_icons_generator/src/core/icon_generator.dart';
+import 'package:flutter_app_icons_generator/src/core/platform_updater.dart';
+import 'package:flutter_app_icons_generator/src/core/splash_generator.dart';
+import 'package:flutter_app_icons_generator/src/core/default_image_optimizer.dart';
+import 'package:flutter_app_icons_generator/src/core/default_image_processor.dart';
+import 'package:flutter_app_icons_generator/src/platforms/android/android_icon_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/android/android_splash_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/android/android_updater.dart';
+import 'package:flutter_app_icons_generator/src/platforms/ios/ios_icon_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/ios/ios_splash_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/ios/ios_updater.dart';
+import 'package:flutter_app_icons_generator/src/platforms/linux/linux_icon_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/linux/linux_splash_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/linux/linux_updater.dart';
+import 'package:flutter_app_icons_generator/src/platforms/macos/macos_icon_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/macos/macos_splash_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/macos/macos_updater.dart';
+import 'package:flutter_app_icons_generator/src/platforms/web/web_icon_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/web/web_splash_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/web/web_updater.dart';
+import 'package:flutter_app_icons_generator/src/platforms/windows/windows_icon_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/windows/windows_splash_generator.dart';
+import 'package:flutter_app_icons_generator/src/platforms/windows/windows_updater.dart';
+import 'package:flutter_app_icons_generator/src/shared/constants.dart';
+import 'package:flutter_app_icons_generator/src/shared/exceptions.dart';
 
 /// Default config file name.
-const String _configFileName = 'flutter_app_icons.yml';
+const String _configFileName = 'flutter_app_icons_generator.yml';
 
 /// CLI runner that orchestrates the full icon/splash generation pipeline.
 ///
@@ -90,7 +90,8 @@ class CliRunner {
 
     final verbose = args['verbose'] as bool;
     final logger = ConsoleLogger(verbose: verbose);
-    final projectRoot = args['project-root'] as String? ?? Directory.current.path;
+    final projectRoot =
+        args['project-root'] as String? ?? Directory.current.path;
 
     // Handle --init flag.
     if (args['init'] as bool) {
@@ -179,7 +180,8 @@ class CliRunner {
 
     // Log splash skip message if not configured.
     if (config.splash == null) {
-      logger.info('ℹ Splash screen not configured — skipping splash generation.');
+      logger
+          .info('ℹ Splash screen not configured — skipping splash generation.');
     }
 
     stopwatch.stop();
@@ -198,7 +200,7 @@ class CliRunner {
     return ArgParser()
       ..addFlag(
         'init',
-        help: 'Generate a default flutter_app_icons.yml config file.',
+        help: 'Generate a default flutter_app_icons_generator.yml config file.',
         negatable: false,
       )
       ..addFlag(
@@ -216,15 +218,17 @@ class CliRunner {
       ..addOption(
         'project-root',
         abbr: 'p',
-        help: 'Path to the Flutter project root (defaults to current directory).',
+        help:
+            'Path to the Flutter project root (defaults to current directory).',
       );
   }
 
   /// Prints usage/help information to stdout.
   void _printUsage() {
-    stdout.writeln('flutter_app_icons — App Icon & Splash Screen Generator');
+    stdout.writeln(
+        'flutter_app_icons_generator — App Icon & Splash Screen Generator');
     stdout.writeln('');
-    stdout.writeln('Usage: dart run flutter_app_icons [options]');
+    stdout.writeln('Usage: dart run flutter_app_icons_generator [options]');
     stdout.writeln('');
     stdout.writeln(_buildParser().usage);
   }

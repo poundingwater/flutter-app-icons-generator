@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_app_icons/src/platforms/web/web_updater.dart';
+import 'package:flutter_app_icons_generator/src/platforms/web/web_updater.dart';
 import 'package:test/test.dart';
 
 void main() {

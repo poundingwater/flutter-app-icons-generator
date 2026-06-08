@@ -1,11 +1,11 @@
-import 'package:flutter_app_icons/src/config/config_model.dart';
+import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 
-/// Abstract interface for parsing the flutter_app_icons.yml configuration file.
+/// Abstract interface for parsing the flutter_app_icons_generator.yml configuration file.
 ///
 /// Reads and validates the YAML configuration, producing a strongly-typed
 /// [AppIconsConfig] object for use in the generation pipeline.
 abstract class ConfigParser {
-  /// Parses the flutter_app_icons.yml file from [projectRoot].
+  /// Parses the flutter_app_icons_generator.yml file from [projectRoot].
   ///
   /// Locates the configuration file, parses the YAML content, and validates
   /// that all required fields are present and correctly structured.

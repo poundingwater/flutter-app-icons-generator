@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
 
-import 'package:flutter_app_icons/src/core/default_image_processor.dart';
-import 'package:flutter_app_icons/src/shared/exceptions.dart';
+import 'package:flutter_app_icons_generator/src/core/default_image_processor.dart';
+import 'package:flutter_app_icons_generator/src/shared/exceptions.dart';
 
 void main() {
   late DefaultImageProcessor processor;

@@ -11,8 +11,8 @@ import 'dart:io';
 
 import 'package:glados/glados.dart';
 import 'package:image/image.dart' as img;
-import 'package:flutter_app_icons/src/core/default_image_processor.dart';
-import 'package:flutter_app_icons/src/shared/exceptions.dart';
+import 'package:flutter_app_icons_generator/src/core/default_image_processor.dart';
+import 'package:flutter_app_icons_generator/src/shared/exceptions.dart';
 
 /// Generates a random dimension pair (width, height) in [1, 2048].
 extension DimensionGenerators on Any {

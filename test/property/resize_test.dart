@@ -9,7 +9,7 @@
 
 import 'package:glados/glados.dart';
 import 'package:image/image.dart' as img;
-import 'package:flutter_app_icons/src/core/default_image_processor.dart';
+import 'package:flutter_app_icons_generator/src/core/default_image_processor.dart';
 
 /// Holds a test case with source dimensions and target dimensions.
 class ResizeTestCase {

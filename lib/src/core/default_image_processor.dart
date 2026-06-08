@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:image/image.dart' as img;
 
-import 'package:flutter_app_icons/src/core/image_processor.dart';
-import 'package:flutter_app_icons/src/shared/exceptions.dart';
+import 'package:flutter_app_icons_generator/src/core/image_processor.dart';
+import 'package:flutter_app_icons_generator/src/shared/exceptions.dart';
 
 /// Concrete implementation of [ImageProcessor] using the `image` package.
 ///

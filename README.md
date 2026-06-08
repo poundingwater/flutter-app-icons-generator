@@ -1,4 +1,4 @@
-# flutter_app_icons
+# flutter_app_icons_generator
 
 A Dart CLI tool that generates platform-specific app icons and native splash screens for Flutter projects.
 
@@ -6,7 +6,7 @@ A Dart CLI tool that generates platform-specific app icons and native splash scr
 
 - Generates correctly sized, optimized icons for **iOS**, **Android**, **macOS**, **Linux**, **Windows**, and **Web**
 - Generates native splash screens for all platforms
-- Reads configuration from a single `flutter_app_icons.yml` file
+- Reads configuration from a single `flutter_app_icons_generator.yml` file
 - Supports adaptive icons (Android) with separate foreground/background layers
 - Automatically removes alpha channels where required by platform standards
 - Cleans existing assets before regeneration for a consistent result
@@ -14,11 +14,11 @@ A Dart CLI tool that generates platform-specific app icons and native splash scr
 
 ## Installation
 
-Add `flutter_app_icons` as a dev dependency in your `pubspec.yaml`:
+Add `flutter_app_icons_generator` as a dev dependency in your `pubspec.yaml`:
 
 ```yaml
 dev_dependencies:
-  flutter_app_icons: ^0.1.0
+  flutter_app_icons_generator: ^0.1.0
 ```
 
 Then run:
@@ -31,15 +31,15 @@ dart pub get
 
 ### Initialize configuration
 
-Generate a default `flutter_app_icons.yml` configuration file:
+Generate a default `flutter_app_icons_generator.yml` configuration file:
 
 ```bash
-dart run flutter_app_icons --init
+dart run flutter_app_icons_generator --init
 ```
 
 ### Configure
 
-Edit `flutter_app_icons.yml` in your project root:
+Edit `flutter_app_icons_generator.yml` in your project root:
 
 ```yaml
 # Icon configuration (required)
@@ -69,13 +69,13 @@ platforms:
 ### Generate icons
 
 ```bash
-dart run flutter_app_icons
+dart run flutter_app_icons_generator
 ```
 
 ### Verbose output
 
 ```bash
-dart run flutter_app_icons --verbose
+dart run flutter_app_icons_generator --verbose
 ```
 
 ## Configuration Reference
