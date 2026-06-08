@@ -1,6 +1,7 @@
 name: flutter_app_icons
 description: A Dart CLI tool that generates platform-specific app icons and native splash screens for Flutter projects.
-version: 0.1.0
+
+version: 0.1.0-dev.1
 
 homepage: https://github.com/poundingwater/flutter-app-icons
 repository: https://github.com/poundingwater/flutter-app-icons
