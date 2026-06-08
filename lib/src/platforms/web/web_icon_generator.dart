@@ -58,14 +58,12 @@ class WebIconGenerator implements IconGenerator {
       iconsDir.createSync(recursive: true);
     }
 
-    // Generate favicon.png (16x16).
-    final favicon = imageProcessor.resize(
+    // Generate favicon.ico with multiple sizes for broad browser compatibility.
+    final faviconBytes = imageOptimizer.encodeIco(
       sourceImage,
-      WebSizes.faviconSize,
-      WebSizes.faviconSize,
+      WebSizes.faviconSizes,
     );
-    final faviconBytes = imageOptimizer.encodePng(favicon);
-    File('$projectRoot/web/favicon.png').writeAsBytesSync(faviconBytes);
+    File('$projectRoot/web/favicon.ico').writeAsBytesSync(faviconBytes);
 
     // Generate PWA icons.
     final pwaSmall = imageProcessor.resize(

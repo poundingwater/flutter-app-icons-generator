@@ -35,8 +35,10 @@ class MacosIconGenerator implements IconGenerator {
   Future<void> generate(IconConfig config, String projectRoot) async {
     final sourceImage = await _loadSourceImage(config);
 
-    // Remove alpha channel (macOS icons must not have transparency).
-    final opaqueImage = imageProcessor.removeAlpha(sourceImage);
+    // Remove alpha channel only if the image has transparency.
+    final opaqueImage = imageProcessor.hasTransparency(sourceImage)
+        ? imageProcessor.removeAlpha(sourceImage)
+        : sourceImage;
 
     // Ensure the output directory exists.
     final outputDir = Directory('$projectRoot/$outputPath');

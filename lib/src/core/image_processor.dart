@@ -18,9 +18,12 @@ abstract class ImageProcessor {
   /// Throws [ImageFormatException] if the format is unsupported.
   Future<img.Image> loadAndValidate(String path);
 
-  /// Resizes [source] to the target [width] and [height] using Lanczos
+  /// Resizes [source] to the target [width] and [height] using cubic
   /// interpolation for high-quality downscaling.
   img.Image resize(img.Image source, int width, int height);
+
+  /// Returns `true` if [source] contains any pixel with alpha less than 255.
+  bool hasTransparency(img.Image source);
 
   /// Removes the alpha channel from [source] by compositing onto a white
   /// background.

@@ -34,8 +34,10 @@ class WindowsIconGenerator implements IconGenerator {
     // Load and validate the source image.
     final sourceImage = await _imageProcessor.loadAndValidate(sourcePath);
 
-    // Remove alpha channel (Windows icons have no alpha channel).
-    final opaqueImage = _imageProcessor.removeAlpha(sourceImage);
+    // Remove alpha channel only if the image has transparency.
+    final opaqueImage = _imageProcessor.hasTransparency(sourceImage)
+        ? _imageProcessor.removeAlpha(sourceImage)
+        : sourceImage;
 
     // Encode as ICO with all required sizes.
     final icoBytes = _imageOptimizer.encodeIco(

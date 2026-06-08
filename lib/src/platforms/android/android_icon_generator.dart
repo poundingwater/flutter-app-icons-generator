@@ -43,7 +43,9 @@ class AndroidIconGenerator implements IconGenerator {
     String projectRoot,
   ) async {
     final sourceImage = await _imageProcessor.loadAndValidate(imagePath);
-    final opaqueImage = _imageProcessor.removeAlpha(sourceImage);
+    final opaqueImage = _imageProcessor.hasTransparency(sourceImage)
+        ? _imageProcessor.removeAlpha(sourceImage)
+        : sourceImage;
 
     for (final entry in AndroidSizes.densityBuckets.entries) {
       final bucketDir = entry.key;
@@ -74,7 +76,9 @@ class AndroidIconGenerator implements IconGenerator {
     // Generate standard icons using a composited version (foreground on background).
     final compositedImage =
         await _createCompositedImage(foregroundImage, config, projectRoot);
-    final opaqueComposited = _imageProcessor.removeAlpha(compositedImage);
+    final opaqueComposited = _imageProcessor.hasTransparency(compositedImage)
+        ? _imageProcessor.removeAlpha(compositedImage)
+        : compositedImage;
 
     for (final entry in AndroidSizes.densityBuckets.entries) {
       final bucketDir = entry.key;
@@ -112,8 +116,7 @@ class AndroidIconGenerator implements IconGenerator {
     // Generate background images at adaptive sizes if background is an image.
     if (config.background is BackgroundImage) {
       final bgConfig = config.background! as BackgroundImage;
-      final bgImage =
-          await _imageProcessor.loadAndValidate(bgConfig.imagePath);
+      final bgImage = await _imageProcessor.loadAndValidate(bgConfig.imagePath);
 
       for (final entry in AndroidSizes.adaptiveSizes.entries) {
         final bucketDir = entry.key;
@@ -127,8 +130,7 @@ class AndroidIconGenerator implements IconGenerator {
           outputDir.createSync(recursive: true);
         }
 
-        final outputFile =
-            File('${outputDir.path}/ic_launcher_background.png');
+        final outputFile = File('${outputDir.path}/ic_launcher_background.png');
         outputFile.writeAsBytesSync(pngBytes);
       }
     }
@@ -212,8 +214,7 @@ class AndroidIconGenerator implements IconGenerator {
 
   /// Generates the `mipmap-anydpi-v26/ic_launcher.xml` adaptive icon descriptor.
   void _generateAdaptiveXml(IconConfig config, String projectRoot) {
-    final outputDir =
-        Directory('$projectRoot/$_resPath/mipmap-anydpi-v26');
+    final outputDir = Directory('$projectRoot/$_resPath/mipmap-anydpi-v26');
     if (!outputDir.existsSync()) {
       outputDir.createSync(recursive: true);
     }
@@ -255,8 +256,7 @@ class AndroidIconGenerator implements IconGenerator {
       final updatedContent =
           existingContent.contains('name="ic_launcher_background"')
               ? existingContent.replaceFirst(
-                  RegExp(
-                      r'<color name="ic_launcher_background">.*?</color>'),
+                  RegExp(r'<color name="ic_launcher_background">.*?</color>'),
                   '<color name="ic_launcher_background">$colorValue</color>',
                 )
               : existingContent.replaceFirst(

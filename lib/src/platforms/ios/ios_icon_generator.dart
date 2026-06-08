@@ -46,8 +46,10 @@ class IosIconGenerator implements IconGenerator {
     // Load and validate the source image.
     final sourceImage = await _imageProcessor.loadAndValidate(sourcePath);
 
-    // Remove alpha channel (composite onto white background).
-    final opaqueImage = _imageProcessor.removeAlpha(sourceImage);
+    // Remove alpha channel only if the image has transparency.
+    final opaqueImage = _imageProcessor.hasTransparency(sourceImage)
+        ? _imageProcessor.removeAlpha(sourceImage)
+        : sourceImage;
 
     // Resize to 1024x1024.
     final resizedImage = _imageProcessor.resize(
