@@ -18,6 +18,11 @@ export 'src/config/config_model.dart';
 export 'src/config/config_parser.dart';
 export 'src/config/config_printer.dart';
 
+// Flavors
+export 'src/flavors/flavor_model.dart';
+export 'src/flavors/flavor_parser.dart';
+export 'src/flavors/flavor_printer.dart';
+
 // CLI
 export 'src/cli/cli_runner.dart';
 export 'src/cli/logger.dart';

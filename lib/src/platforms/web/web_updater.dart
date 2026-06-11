@@ -10,7 +10,7 @@ import 'package:flutter_app_icons_generator/src/core/platform_updater.dart';
 /// - `web/index.html`: Ensures a `<link rel="icon">` tag references `favicon.ico`
 class WebUpdater implements PlatformUpdater {
   @override
-  Future<void> update(String projectRoot) async {
+  Future<void> update(String projectRoot, {String? flavorName}) async {
     _updateManifestJson(projectRoot);
     _updateIndexHtml(projectRoot);
   }

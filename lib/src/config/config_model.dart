@@ -1,3 +1,4 @@
+import 'package:flutter_app_icons_generator/src/flavors/flavor_model.dart';
 import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 
 /// Root configuration model parsed from flutter_app_icons_generator.yml.
@@ -5,6 +6,7 @@ class AppIconsConfig {
   const AppIconsConfig({
     required this.icon,
     this.splash,
+    this.flavors = const {},
     this.platforms = const {
       Platform.android,
       Platform.ios,
@@ -16,6 +18,9 @@ class AppIconsConfig {
 
   /// Splash screen configuration (optional).
   final SplashConfig? splash;
+
+  /// Map of flavor name to its configuration.
+  final Map<String, FlavorConfig> flavors;
 
   /// Target platforms. Defaults to android and ios.
   final Set<Platform> platforms;
@@ -31,11 +36,13 @@ class AppIconsConfig {
   AppIconsConfig copyWith({
     IconConfig? icon,
     SplashConfig? splash,
+    Map<String, FlavorConfig>? flavors,
     Set<Platform>? platforms,
   }) {
     return AppIconsConfig(
       icon: icon ?? this.icon,
       splash: splash ?? this.splash,
+      flavors: flavors ?? this.flavors,
       platforms: platforms ?? this.platforms,
     );
   }
@@ -46,16 +53,17 @@ class AppIconsConfig {
     if (other is! AppIconsConfig) return false;
     return icon == other.icon &&
         splash == other.splash &&
+        _mapEquals(flavors, other.flavors) &&
         _setEquals(platforms, other.platforms);
   }
 
   @override
   int get hashCode =>
-      Object.hash(icon, splash, Object.hashAllUnordered(platforms));
+      Object.hash(icon, splash, _mapHash(flavors), Object.hashAllUnordered(platforms));
 
   @override
   String toString() =>
-      'AppIconsConfig(icon: $icon, splash: $splash, platforms: $platforms)';
+      'AppIconsConfig(icon: $icon, splash: $splash, flavors: $flavors, platforms: $platforms)';
 }
 
 /// Icon source configuration.
@@ -344,4 +352,11 @@ bool _mapEquals<K, V>(Map<K, V> a, Map<K, V> b) {
     if (!b.containsKey(key) || a[key] != b[key]) return false;
   }
   return true;
+}
+
+/// Helper to hash a map.
+int _mapHash(Map<dynamic, dynamic> map) {
+  return Object.hashAllUnordered(
+    map.entries.map((e) => Object.hash(e.key, e.value)),
+  );
 }

@@ -1,0 +1,16 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Example: Basic setup (no flavors)
+# ─────────────────────────────────────────────────────────────────────────────
+# Generate one set of icons for all platforms using adaptive foreground + background.
+
+icon:
+  foreground: assets/icon_foreground.png
+  background: "#4CAF50"
+
+platforms:
+  - android
+  - ios
+  - macos
+  - web
+  - linux
+  - windows

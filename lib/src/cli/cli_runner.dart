@@ -47,6 +47,7 @@ class CliRunner {
   /// Creates a [CliRunner] with optional dependency overrides.
   ///
   /// If dependencies are not provided, sensible defaults are used.
+  /// [promptOverride] can be provided in tests to bypass interactive stdin.
   CliRunner({
     ConfigParser? configParser,
     ConfigPrinter? configPrinter,
@@ -54,12 +55,14 @@ class CliRunner {
     Map<Platform, IconGenerator>? iconGenerators,
     Map<Platform, PlatformUpdater>? platformUpdaters,
     Map<Platform, SplashGenerator>? splashGenerators,
+    String? Function()? promptOverride,
   })  : _configParser = configParser ?? const YamlConfigParser(),
         _configPrinter = configPrinter ?? YamlConfigPrinter(),
         _assetCleaner = assetCleaner ?? DefaultAssetCleaner(),
         _iconGenerators = iconGenerators ?? _defaultIconGenerators(),
         _platformUpdaters = platformUpdaters ?? _defaultPlatformUpdaters(),
-        _splashGenerators = splashGenerators ?? _defaultSplashGenerators();
+        _splashGenerators = splashGenerators ?? _defaultSplashGenerators(),
+        _promptOverride = promptOverride;
 
   final ConfigParser _configParser;
   final ConfigPrinter _configPrinter;
@@ -67,6 +70,13 @@ class CliRunner {
   final Map<Platform, IconGenerator> _iconGenerators;
   final Map<Platform, PlatformUpdater> _platformUpdaters;
   final Map<Platform, SplashGenerator> _splashGenerators;
+  final String? Function()? _promptOverride;
+
+  /// Reads a line from stdin, or uses the override if provided.
+  String? _readLine() {
+    if (_promptOverride != null) return _promptOverride!();
+    return stdin.readLineSync();
+  }
 
   /// Runs the CLI with the given [arguments].
   ///
@@ -108,9 +118,13 @@ class CliRunner {
     final configFile = File(configPath);
 
     if (configFile.existsSync()) {
-      final exception = ConfigExistsException(configPath);
-      logger.fatalError(exception.message);
-      return exception.exitCode;
+      stdout.write('⚠️  Config file already exists: $configPath\n'
+          'Overwrite? [y/N] ');
+      final response = _readLine()?.trim().toLowerCase() ?? '';
+      if (response != 'y' && response != 'yes') {
+        logger.info('Aborted.');
+        return 0;
+      }
     }
 
     final defaultContent = _configPrinter.printDefault();
@@ -130,86 +144,76 @@ class CliRunner {
       return e.exitCode;
     }
 
+    // Detect existing generated assets and prompt user for confirmation.
+    final existingAssets = _detectExistingAssets(config, projectRoot);
+    if (existingAssets.isNotEmpty) {
+      logger.info('⚠️  Existing generated assets detected:');
+      for (final asset in existingAssets) {
+        logger.info('   • $asset');
+      }
+      logger.info('');
+      stdout.write('These will be removed and regenerated. Continue? [y/N] ');
+      final response = _readLine()?.trim().toLowerCase() ?? '';
+      if (response != 'y' && response != 'yes') {
+        logger.info('Aborted.');
+        return 0;
+      }
+      logger.info('');
+    }
+
     final stopwatch = Stopwatch()..start();
     var totalFiles = 0;
     final errors = <PlatformGenerationException>[];
 
-    // Validate all source images exist BEFORE cleaning any assets.
+    // Process each platform.
     for (final platform in config.platforms) {
-      final resolvedIcon = config.icon.resolve(platform);
-      if (resolvedIcon.foregroundPath == null) {
-        logger.fatalError(
-          'No icon source configured for ${platform.name}. '
-          'Set icon.all_platforms or icon.foreground in your config.',
-        );
-        return 1;
-      }
-      final foregroundFile = File(resolvedIcon.foregroundPath!);
-      if (!foregroundFile.existsSync()) {
-        logger.fatalError(
-          'Source image not found: ${resolvedIcon.foregroundPath}',
-        );
-        return 1;
-      }
-      if (resolvedIcon.background is BackgroundImage) {
-        final bgPath = (resolvedIcon.background! as BackgroundImage).imagePath;
-        final bgFile = File(bgPath);
-        if (!bgFile.existsSync()) {
-          logger.fatalError('Background image not found: $bgPath');
-          return 1;
+      final supportsFlavors = platform == Platform.android ||
+          platform == Platform.ios ||
+          platform == Platform.macos;
+
+      if (config.flavors.isNotEmpty && supportsFlavors) {
+        for (final entry in config.flavors.entries) {
+          final flavorName = entry.key;
+          final flavorConfig = entry.value;
+
+          final success = await _processPlatform(
+            platform: platform,
+            iconConfig: flavorConfig.icon,
+            splashConfig: flavorConfig.splash,
+            flavorName: flavorName,
+            projectRoot: projectRoot,
+            logger: logger,
+            errors: errors,
+          );
+          if (success) totalFiles++;
+        }
+      } else {
+        if (config.isValid) {
+          final success = await _processPlatform(
+            platform: platform,
+            iconConfig: config.icon,
+            splashConfig: config.splash,
+            flavorName: null,
+            projectRoot: projectRoot,
+            logger: logger,
+            errors: errors,
+          );
+          if (success) totalFiles++;
+        } else {
+          logger.verbose(
+              '  Skipped default generation for ${platform.name} (no default config)');
         }
       }
     }
 
-    // Process each platform.
-    for (final platform in config.platforms) {
-      try {
-        logger.platformStart(platform);
-
-        // Clean old assets (safe — source images verified above).
-        await _assetCleaner.clean(platform, projectRoot);
-        logger.verbose('  Cleaned old assets for ${platform.name}');
-
-        // Resolve icon config for this platform.
-        final resolvedIcon = config.icon.resolve(platform);
-
-        // Generate icons.
-        final generator = _iconGenerators[platform];
-        if (generator != null) {
-          await generator.generate(resolvedIcon, projectRoot);
-          logger.verbose('  Generated icons for ${platform.name}');
-        }
-
-        // Update platform config files.
-        final updater = _platformUpdaters[platform];
-        if (updater != null) {
-          await updater.update(projectRoot);
-          logger.verbose('  Updated config for ${platform.name}');
-        }
-
-        // Generate splash if configured.
-        if (config.splash != null) {
-          final splashGenerator = _splashGenerators[platform];
-          if (splashGenerator != null) {
-            await splashGenerator.generate(config.splash!, projectRoot);
-            logger.verbose('  Generated splash for ${platform.name}');
-          }
-        }
-
-        totalFiles++;
-        logger.platformComplete(platform);
-      } on Exception catch (e) {
-        final platformError = PlatformGenerationException(
-          platform: platform,
-          error: e.toString(),
-        );
-        errors.add(platformError);
-        logger.platformError(platform, platformError.error);
-      }
+    // Configure platform-level flavor settings after all assets are generated.
+    if (config.flavors.isNotEmpty) {
+      await _configureFlavorPlatformSettings(config, projectRoot, logger);
     }
 
     // Log splash skip message if not configured.
-    if (config.splash == null) {
+    if (config.splash == null &&
+        config.flavors.values.every((f) => f.splash == null)) {
       logger
           .info('ℹ Splash screen not configured — skipping splash generation.');
     }
@@ -223,6 +227,144 @@ class CliRunner {
     }
 
     return 0;
+  }
+
+  /// Configures platform-level flavor settings (build.gradle.kts, Xcode schemes, etc.)
+  ///
+  /// This is called once after all flavor assets have been generated, as these
+  /// configurations apply to all flavors at once rather than per-flavor.
+  Future<void> _configureFlavorPlatformSettings(
+    AppIconsConfig config,
+    String projectRoot,
+    Logger logger,
+  ) async {
+    // Android: configure productFlavors in build.gradle.kts
+    if (config.platforms.contains(Platform.android)) {
+      try {
+        final androidUpdater =
+            _platformUpdaters[Platform.android] as AndroidUpdater?;
+        if (androidUpdater != null) {
+          await androidUpdater.configureProductFlavors(
+              projectRoot, config.flavors);
+          logger.verbose(
+              '  Configured Android productFlavors in build.gradle.kts');
+        }
+      } on Exception catch (e) {
+        logger.platformError(
+            Platform.android, 'Failed to configure productFlavors: $e');
+      }
+    }
+
+    // iOS: configure xcconfigs and schemes
+    if (config.platforms.contains(Platform.ios)) {
+      try {
+        final iosUpdater = _platformUpdaters[Platform.ios] as IosUpdater?;
+        if (iosUpdater != null) {
+          await iosUpdater.configureFlavors(projectRoot, config.flavors);
+          logger.verbose('  Configured iOS xcconfigs and schemes for flavors');
+        }
+      } on Exception catch (e) {
+        logger.platformError(
+            Platform.ios, 'Failed to configure iOS flavor settings: $e');
+      }
+    }
+
+    // macOS: configure xcconfigs and schemes
+    if (config.platforms.contains(Platform.macos)) {
+      try {
+        final macosUpdater = _platformUpdaters[Platform.macos] as MacosUpdater?;
+        if (macosUpdater != null) {
+          await macosUpdater.configureFlavors(projectRoot, config.flavors);
+          logger
+              .verbose('  Configured macOS xcconfigs and schemes for flavors');
+        }
+      } on Exception catch (e) {
+        logger.platformError(
+            Platform.macos, 'Failed to configure macOS flavor settings: $e');
+      }
+    }
+  }
+
+  /// Processes a single platform for a specific configuration.
+  Future<bool> _processPlatform({
+    required Platform platform,
+    required IconConfig iconConfig,
+    required SplashConfig? splashConfig,
+    required String? flavorName,
+    required String projectRoot,
+    required Logger logger,
+    required List<PlatformGenerationException> errors,
+  }) async {
+    final resolvedIcon = iconConfig.resolve(platform);
+
+    // Validate sources
+    if (resolvedIcon.foregroundPath == null) {
+      logger.fatalError(
+        'No icon source configured for ${platform.name}${flavorName != null ? ' (flavor: $flavorName)' : ''}.',
+      );
+      return false;
+    }
+    final foregroundFile = File(resolvedIcon.foregroundPath!);
+    if (!foregroundFile.existsSync()) {
+      logger
+          .fatalError('Source image not found: ${resolvedIcon.foregroundPath}');
+      return false;
+    }
+    if (resolvedIcon.background is BackgroundImage) {
+      final bgPath = (resolvedIcon.background! as BackgroundImage).imagePath;
+      final bgFile = File(bgPath);
+      if (!bgFile.existsSync()) {
+        logger.fatalError('Background image not found: $bgPath');
+        return false;
+      }
+    }
+
+    final platformLogName =
+        flavorName != null ? '${platform.name} [$flavorName]' : platform.name;
+
+    try {
+      logger.info('Running for $platformLogName...');
+
+      // Clean old assets
+      await _assetCleaner.clean(platform, projectRoot, flavorName: flavorName);
+      logger.verbose('  Cleaned old assets for $platformLogName');
+
+      // Generate icons
+      final generator = _iconGenerators[platform];
+      if (generator != null) {
+        await generator.generate(resolvedIcon, projectRoot,
+            flavorName: flavorName);
+        logger.verbose('  Generated icons for $platformLogName');
+      }
+
+      // Update platform config files
+      final updater = _platformUpdaters[platform];
+      if (updater != null) {
+        await updater.update(projectRoot, flavorName: flavorName);
+        logger.verbose('  Updated config for $platformLogName');
+      }
+
+      // Generate splash
+      if (splashConfig != null) {
+        final splashGenerator = _splashGenerators[platform];
+        if (splashGenerator != null) {
+          await splashGenerator.generate(splashConfig, projectRoot,
+              flavorName: flavorName);
+          logger.verbose('  Generated splash for $platformLogName');
+        }
+      }
+
+      logger.info('✓ Completed $platformLogName');
+      return true;
+    } on Exception catch (e) {
+      final platformError = PlatformGenerationException(
+        platform: platform,
+        error: e.toString(),
+      );
+      errors.add(platformError);
+      logger.platformError(platform, platformError.error);
+      return false;
+    }
   }
 
   /// Builds the argument parser.
@@ -321,5 +463,100 @@ class CliRunner {
         imageOptimizer: imageOptimizer,
       ),
     };
+  }
+
+  /// Detects existing generated assets for the configured platforms.
+  ///
+  /// Returns a list of human-readable descriptions of found assets.
+  /// This enables prompting the user before overwriting.
+  List<String> _detectExistingAssets(
+      AppIconsConfig config, String projectRoot) {
+    final detected = <String>[];
+
+    for (final platform in config.platforms) {
+      final supportsFlavors = platform == Platform.android ||
+          platform == Platform.ios ||
+          platform == Platform.macos;
+
+      if (config.flavors.isNotEmpty && supportsFlavors) {
+        // Check for flavor-specific assets.
+        for (final flavorName in config.flavors.keys) {
+          final assets =
+              _detectPlatformAssets(platform, projectRoot, flavorName);
+          detected.addAll(assets);
+        }
+      } else {
+        final assets = _detectPlatformAssets(platform, projectRoot, null);
+        detected.addAll(assets);
+      }
+    }
+
+    return detected;
+  }
+
+  /// Detects existing generated assets for a specific platform.
+  List<String> _detectPlatformAssets(
+      Platform platform, String projectRoot, String? flavorName) {
+    final detected = <String>[];
+
+    switch (platform) {
+      case Platform.android:
+        final resDir =
+            '$projectRoot/android/app/src/${flavorName ?? "main"}/res';
+        final mipmapDir = Directory('$resDir/mipmap-hdpi');
+        if (mipmapDir.existsSync()) {
+          final icLauncher = File('$resDir/mipmap-hdpi/ic_launcher.png');
+          if (icLauncher.existsSync()) {
+            final label = flavorName != null
+                ? 'Android [$flavorName] mipmap icons'
+                : 'Android mipmap icons';
+            detected.add(label);
+          }
+        }
+
+      case Platform.ios:
+        final iconName = flavorName != null ? 'AppIcon-$flavorName' : 'AppIcon';
+        final assetDir =
+            '$projectRoot/ios/Runner/Assets.xcassets/$iconName.appiconset';
+        final iconFile = File('$assetDir/app_icon_1024.png');
+        if (iconFile.existsSync()) {
+          final label = flavorName != null
+              ? 'iOS [$flavorName] AppIcon ($iconName.appiconset)'
+              : 'iOS AppIcon (AppIcon.appiconset)';
+          detected.add(label);
+        }
+
+      case Platform.macos:
+        final iconName = flavorName != null ? 'AppIcon-$flavorName' : 'AppIcon';
+        final icnsFile = File(
+            '$projectRoot/macos/Runner/Assets.xcassets/$iconName.appiconset/app_icon.icns');
+        if (icnsFile.existsSync()) {
+          final label = flavorName != null
+              ? 'macOS [$flavorName] AppIcon ($iconName.appiconset)'
+              : 'macOS AppIcon (app_icon.icns)';
+          detected.add(label);
+        }
+
+      case Platform.web:
+        final faviconFile = File('$projectRoot/web/favicon.ico');
+        if (faviconFile.existsSync()) {
+          detected.add('Web icons (favicon.ico, PWA icons)');
+        }
+
+      case Platform.linux:
+        final linuxIcon = File('$projectRoot/linux/app_icon.png');
+        if (linuxIcon.existsSync()) {
+          detected.add('Linux icon (app_icon.png)');
+        }
+
+      case Platform.windows:
+        final windowsIcon =
+            File('$projectRoot/windows/runner/resources/app_icon.ico');
+        if (windowsIcon.existsSync()) {
+          detected.add('Windows icon (app_icon.ico)');
+        }
+    }
+
+    return detected;
   }
 }

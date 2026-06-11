@@ -11,8 +11,10 @@ abstract class AssetCleaner {
   /// the Flutter project at [projectRoot].
   ///
   /// This ensures that stale or default assets do not persist alongside
-  /// newly generated icons.
-  Future<void> clean(Platform platform, String projectRoot);
+  ///
+  /// [flavorName] is the optional name of the flavor to clean.
+  Future<void> clean(Platform platform, String projectRoot,
+      {String? flavorName});
 }
 
 /// Default implementation of [AssetCleaner] that removes platform-specific
@@ -22,20 +24,21 @@ abstract class AssetCleaner {
 /// do not exist.
 class DefaultAssetCleaner implements AssetCleaner {
   @override
-  Future<void> clean(Platform platform, String projectRoot) async {
+  Future<void> clean(Platform platform, String projectRoot,
+      {String? flavorName}) async {
     switch (platform) {
       case Platform.android:
-        _cleanAndroid(projectRoot);
+        _cleanAndroid(projectRoot, flavorName);
       case Platform.ios:
-        _cleanIos(projectRoot);
+        _cleanIos(projectRoot, flavorName);
       case Platform.macos:
-        _cleanMacos(projectRoot);
+        _cleanMacos(projectRoot, flavorName);
       case Platform.web:
-        _cleanWeb(projectRoot);
+        _cleanWeb(projectRoot, flavorName);
       case Platform.linux:
-        _cleanLinux(projectRoot);
+        _cleanLinux(projectRoot, flavorName);
       case Platform.windows:
-        _cleanWindows(projectRoot);
+        _cleanWindows(projectRoot, flavorName);
     }
   }
 
@@ -45,47 +48,51 @@ class DefaultAssetCleaner implements AssetCleaner {
   /// - `ic_launcher.png` from each mipmap density bucket
   /// - `ic_launcher_foreground.png` from each mipmap density bucket
   /// - `ic_launcher.xml` from `mipmap-anydpi-v26`
-  void _cleanAndroid(String projectRoot) {
-    final resDir = '$projectRoot/android/app/src/main/res';
+  void _cleanAndroid(String projectRoot, String? flavorName) {
+    final resDir = 'android/app/src/${flavorName ?? "main"}/res';
+    final fullResDir = '$projectRoot/$resDir';
 
     for (final bucketKey in AndroidSizes.densityBuckets.keys) {
-      _deleteFileIfExists('$resDir/$bucketKey/ic_launcher.png');
-      _deleteFileIfExists('$resDir/$bucketKey/ic_launcher_foreground.png');
+      _deleteFileIfExists('$fullResDir/$bucketKey/ic_launcher.png');
+      _deleteFileIfExists('$fullResDir/$bucketKey/ic_launcher_foreground.png');
+      _deleteFileIfExists('$fullResDir/$bucketKey/ic_launcher_background.png');
     }
 
-    _deleteFileIfExists('$resDir/mipmap-anydpi-v26/ic_launcher.xml');
+    _deleteFileIfExists('$fullResDir/mipmap-anydpi-v26/ic_launcher.xml');
   }
 
   /// Deletes all contents of the iOS AppIcon.appiconset directory,
   /// but preserves the directory itself.
-  void _cleanIos(String projectRoot) {
+  void _cleanIos(String projectRoot, String? flavorName) {
+    final iconName = flavorName != null ? 'AppIcon-$flavorName' : 'AppIcon';
     final appiconsetDir =
-        '$projectRoot/ios/Runner/Assets.xcassets/AppIcon.appiconset';
+        '$projectRoot/ios/Runner/Assets.xcassets/$iconName.appiconset';
     _deleteDirectoryContents(appiconsetDir);
   }
 
   /// Deletes all contents of the macOS AppIcon.appiconset directory,
   /// but preserves the directory itself.
-  void _cleanMacos(String projectRoot) {
+  void _cleanMacos(String projectRoot, String? flavorName) {
+    final iconName = flavorName != null ? 'AppIcon-$flavorName' : 'AppIcon';
     final appiconsetDir =
-        '$projectRoot/macos/Runner/Assets.xcassets/AppIcon.appiconset';
+        '$projectRoot/macos/Runner/Assets.xcassets/$iconName.appiconset';
     _deleteDirectoryContents(appiconsetDir);
   }
 
   /// Deletes web icon assets including favicons and the icons directory.
-  void _cleanWeb(String projectRoot) {
+  void _cleanWeb(String projectRoot, String? flavorName) {
     _deleteFileIfExists('$projectRoot/web/favicon.png');
     _deleteFileIfExists('$projectRoot/web/favicon.ico');
     _deleteDirectoryIfExists('$projectRoot/web/icons');
   }
 
   /// Deletes the Linux app icon.
-  void _cleanLinux(String projectRoot) {
+  void _cleanLinux(String projectRoot, String? flavorName) {
     _deleteFileIfExists('$projectRoot/linux/app_icon.png');
   }
 
   /// Deletes the Windows app icon.
-  void _cleanWindows(String projectRoot) {
+  void _cleanWindows(String projectRoot, String? flavorName) {
     _deleteFileIfExists('$projectRoot/windows/runner/resources/app_icon.ico');
   }
 

@@ -25,15 +25,18 @@ class MacosIconGenerator implements IconGenerator {
   /// Image optimizer for ICNS encoding.
   final ImageOptimizer imageOptimizer;
 
-  /// Output directory path relative to the project root.
-  static const String outputPath =
-      'macos/Runner/Assets.xcassets/AppIcon.appiconset';
-
   /// The filename for the generated ICNS file.
   static const String icnsFilename = 'app_icon.icns';
 
+  /// Returns the output path for the given flavor.
+  String _getOutputPath(String? flavorName) {
+    final iconName = flavorName != null ? 'AppIcon-$flavorName' : 'AppIcon';
+    return 'macos/Runner/Assets.xcassets/$iconName.appiconset';
+  }
+
   @override
-  Future<void> generate(ResolvedIconConfig config, String projectRoot) async {
+  Future<void> generate(ResolvedIconConfig config, String projectRoot,
+      {String? flavorName}) async {
     if (config.foregroundPath == null) {
       throw ArgumentError(
         'ResolvedIconConfig must have foregroundPath set.',
@@ -57,7 +60,7 @@ class MacosIconGenerator implements IconGenerator {
         : sourceImage;
 
     // Ensure the output directory exists.
-    final outputDir = Directory('$projectRoot/$outputPath');
+    final outputDir = Directory('$projectRoot/${_getOutputPath(flavorName)}');
     if (!outputDir.existsSync()) {
       outputDir.createSync(recursive: true);
     }

@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Example: App flavors setup (dev + prod)
+# ─────────────────────────────────────────────────────────────────────────────
+# Generate different icons per flavor for Android, iOS, and macOS.
+# Non-flavor platforms (web, linux, windows) use the top-level icon.
+
+icon:
+  foreground: assets/icon_foreground.png
+  background: assets/background.png
+
+flavors:
+  dev:
+    bundle_identifier: com.example.myapp.dev
+    icon:
+      foreground: assets/dev_foreground.png
+      background: "#4CAF50"
+  prod:
+    bundle_identifier: com.example.myapp
+    icon:
+      foreground: assets/prod_foreground.png
+      background: "#1e1e2e"
+
+platforms:
+  - android
+  - ios
+  - macos
+  - web
+  - linux
+  - windows

@@ -17,7 +17,7 @@ class WindowsUpdater implements PlatformUpdater {
   static const String _runnerRcPath = 'windows/runner/Runner.rc';
 
   @override
-  Future<void> update(String projectRoot) async {
+  Future<void> update(String projectRoot, {String? flavorName}) async {
     final rcFile = File('$projectRoot/$_runnerRcPath');
 
     if (!rcFile.existsSync()) {

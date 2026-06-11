@@ -9,5 +9,6 @@ abstract class SplashGenerator {
   ///
   /// [config] contains the splash image path and background color settings.
   /// [projectRoot] is the root directory of the Flutter project.
-  Future<void> generate(SplashConfig config, String projectRoot);
+  /// [flavorName] is the optional name of the flavor to generate splash screen for.
+  Future<void> generate(SplashConfig config, String projectRoot, {String? flavorName});
 }

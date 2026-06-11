@@ -27,7 +27,7 @@ class LinuxSplashGenerator implements SplashGenerator {
   static const int splashSize = 512;
 
   @override
-  Future<void> generate(SplashConfig config, String projectRoot) async {
+  Future<void> generate(SplashConfig config, String projectRoot, {String? flavorName}) async {
     // Load and validate the splash source image.
     final img.Image sourceImage =
         await imageProcessor.loadAndValidate(config.imagePath);
