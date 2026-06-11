@@ -1,4 +1,5 @@
 import 'package:flutter_app_icons_generator/src/config/config_model.dart';
+import 'package:flutter_app_icons_generator/src/flavors/flavor_printer.dart';
 import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 
 /// Abstract interface for serializing configuration to YAML format.
@@ -69,6 +70,14 @@ class YamlConfigPrinter implements ConfigPrinter {
         buffer
             .writeln('  background_color: "${config.splash!.backgroundColor}"');
       }
+    }
+
+    // Flavors section
+    if (config.flavors.isNotEmpty) {
+      buffer.write(FlavorPrinter.printFlavors(
+        config.flavors,
+        backgroundToString: _backgroundToString,
+      ));
     }
 
     // Platforms section (only if not the default set)
@@ -147,7 +156,7 @@ icon:
 # splash:
 #   image: assets/splash.png
 #   background_color: "#FFFFFF"
-
+${FlavorPrinter.printDefaultExample()}
 # ─────────────────────────────────────────────────────────────────────────────
 # Target Platforms (optional — defaults to android and ios)
 # ─────────────────────────────────────────────────────────────────────────────

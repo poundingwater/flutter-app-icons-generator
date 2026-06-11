@@ -7,5 +7,6 @@ abstract class PlatformUpdater {
   /// Updates platform configuration files to reference generated assets.
   ///
   /// [projectRoot] is the root directory of the Flutter project.
-  Future<void> update(String projectRoot);
+  /// [flavorName] is the optional name of the flavor to update configuration for.
+  Future<void> update(String projectRoot, {String? flavorName});
 }

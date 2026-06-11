@@ -28,11 +28,13 @@ class IosIconGenerator implements IconGenerator {
   static const String iconFilename = 'app_icon_1024.png';
 
   /// The relative path within the project root for the iOS app icon asset set.
-  static const String assetPath =
-      'ios/Runner/Assets.xcassets/AppIcon.appiconset';
+  String _getAssetPath(String? flavorName) {
+    final iconName = flavorName != null ? 'AppIcon-$flavorName' : 'AppIcon';
+    return 'ios/Runner/Assets.xcassets/$iconName.appiconset';
+  }
 
   @override
-  Future<void> generate(ResolvedIconConfig config, String projectRoot) async {
+  Future<void> generate(ResolvedIconConfig config, String projectRoot, {String? flavorName}) async {
     if (config.foregroundPath == null) {
       throw ArgumentError(
         'ResolvedIconConfig must have foregroundPath set.',
@@ -67,7 +69,7 @@ class IosIconGenerator implements IconGenerator {
     final pngBytes = _imageOptimizer.encodePng(resizedImage);
 
     // Ensure the output directory exists.
-    final outputDir = Directory('$projectRoot/$assetPath');
+    final outputDir = Directory('$projectRoot/${_getAssetPath(flavorName)}');
     if (!outputDir.existsSync()) {
       outputDir.createSync(recursive: true);
     }

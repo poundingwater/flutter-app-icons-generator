@@ -134,82 +134,54 @@ class CliRunner {
     var totalFiles = 0;
     final errors = <PlatformGenerationException>[];
 
-    // Validate all source images exist BEFORE cleaning any assets.
+    // Process each platform.
     for (final platform in config.platforms) {
-      final resolvedIcon = config.icon.resolve(platform);
-      if (resolvedIcon.foregroundPath == null) {
-        logger.fatalError(
-          'No icon source configured for ${platform.name}. '
-          'Set icon.all_platforms or icon.foreground in your config.',
-        );
-        return 1;
-      }
-      final foregroundFile = File(resolvedIcon.foregroundPath!);
-      if (!foregroundFile.existsSync()) {
-        logger.fatalError(
-          'Source image not found: ${resolvedIcon.foregroundPath}',
-        );
-        return 1;
-      }
-      if (resolvedIcon.background is BackgroundImage) {
-        final bgPath = (resolvedIcon.background! as BackgroundImage).imagePath;
-        final bgFile = File(bgPath);
-        if (!bgFile.existsSync()) {
-          logger.fatalError('Background image not found: $bgPath');
-          return 1;
+      final supportsFlavors =
+          platform == Platform.android || platform == Platform.ios;
+
+      if (config.flavors.isNotEmpty && supportsFlavors) {
+        for (final entry in config.flavors.entries) {
+          final flavorName = entry.key;
+          final flavorConfig = entry.value;
+
+          final success = await _processPlatform(
+            platform: platform,
+            iconConfig: flavorConfig.icon,
+            splashConfig: flavorConfig.splash,
+            flavorName: flavorName,
+            projectRoot: projectRoot,
+            logger: logger,
+            errors: errors,
+          );
+          if (success) totalFiles++;
+        }
+      } else {
+        if (config.isValid) {
+          final success = await _processPlatform(
+            platform: platform,
+            iconConfig: config.icon,
+            splashConfig: config.splash,
+            flavorName: null,
+            projectRoot: projectRoot,
+            logger: logger,
+            errors: errors,
+          );
+          if (success) totalFiles++;
+        } else {
+          logger.verbose(
+              '  Skipped default generation for ${platform.name} (no default config)');
         }
       }
     }
 
-    // Process each platform.
-    for (final platform in config.platforms) {
-      try {
-        logger.platformStart(platform);
-
-        // Clean old assets (safe — source images verified above).
-        await _assetCleaner.clean(platform, projectRoot);
-        logger.verbose('  Cleaned old assets for ${platform.name}');
-
-        // Resolve icon config for this platform.
-        final resolvedIcon = config.icon.resolve(platform);
-
-        // Generate icons.
-        final generator = _iconGenerators[platform];
-        if (generator != null) {
-          await generator.generate(resolvedIcon, projectRoot);
-          logger.verbose('  Generated icons for ${platform.name}');
-        }
-
-        // Update platform config files.
-        final updater = _platformUpdaters[platform];
-        if (updater != null) {
-          await updater.update(projectRoot);
-          logger.verbose('  Updated config for ${platform.name}');
-        }
-
-        // Generate splash if configured.
-        if (config.splash != null) {
-          final splashGenerator = _splashGenerators[platform];
-          if (splashGenerator != null) {
-            await splashGenerator.generate(config.splash!, projectRoot);
-            logger.verbose('  Generated splash for ${platform.name}');
-          }
-        }
-
-        totalFiles++;
-        logger.platformComplete(platform);
-      } on Exception catch (e) {
-        final platformError = PlatformGenerationException(
-          platform: platform,
-          error: e.toString(),
-        );
-        errors.add(platformError);
-        logger.platformError(platform, platformError.error);
-      }
+    // Configure platform-level flavor settings after all assets are generated.
+    if (config.flavors.isNotEmpty) {
+      await _configureFlavorPlatformSettings(config, projectRoot, logger);
     }
 
     // Log splash skip message if not configured.
-    if (config.splash == null) {
+    if (config.splash == null &&
+        config.flavors.values.every((f) => f.splash == null)) {
       logger
           .info('ℹ Splash screen not configured — skipping splash generation.');
     }
@@ -223,6 +195,129 @@ class CliRunner {
     }
 
     return 0;
+  }
+
+  /// Configures platform-level flavor settings (build.gradle.kts, Xcode schemes, etc.)
+  ///
+  /// This is called once after all flavor assets have been generated, as these
+  /// configurations apply to all flavors at once rather than per-flavor.
+  Future<void> _configureFlavorPlatformSettings(
+    AppIconsConfig config,
+    String projectRoot,
+    Logger logger,
+  ) async {
+    // Android: configure productFlavors in build.gradle.kts
+    if (config.platforms.contains(Platform.android)) {
+      try {
+        final androidUpdater =
+            _platformUpdaters[Platform.android] as AndroidUpdater?;
+        if (androidUpdater != null) {
+          await androidUpdater.configureProductFlavors(
+              projectRoot, config.flavors);
+          logger.verbose(
+              '  Configured Android productFlavors in build.gradle.kts');
+        }
+      } on Exception catch (e) {
+        logger.platformError(
+            Platform.android, 'Failed to configure productFlavors: $e');
+      }
+    }
+
+    // iOS: configure xcconfigs and schemes
+    if (config.platforms.contains(Platform.ios)) {
+      try {
+        final iosUpdater = _platformUpdaters[Platform.ios] as IosUpdater?;
+        if (iosUpdater != null) {
+          await iosUpdater.configureFlavors(projectRoot, config.flavors);
+          logger.verbose('  Configured iOS xcconfigs and schemes for flavors');
+        }
+      } on Exception catch (e) {
+        logger.platformError(
+            Platform.ios, 'Failed to configure iOS flavor settings: $e');
+      }
+    }
+  }
+
+  /// Processes a single platform for a specific configuration.
+  Future<bool> _processPlatform({
+    required Platform platform,
+    required IconConfig iconConfig,
+    required SplashConfig? splashConfig,
+    required String? flavorName,
+    required String projectRoot,
+    required Logger logger,
+    required List<PlatformGenerationException> errors,
+  }) async {
+    final resolvedIcon = iconConfig.resolve(platform);
+
+    // Validate sources
+    if (resolvedIcon.foregroundPath == null) {
+      logger.fatalError(
+        'No icon source configured for ${platform.name}${flavorName != null ? ' (flavor: $flavorName)' : ''}.',
+      );
+      return false;
+    }
+    final foregroundFile = File(resolvedIcon.foregroundPath!);
+    if (!foregroundFile.existsSync()) {
+      logger
+          .fatalError('Source image not found: ${resolvedIcon.foregroundPath}');
+      return false;
+    }
+    if (resolvedIcon.background is BackgroundImage) {
+      final bgPath = (resolvedIcon.background! as BackgroundImage).imagePath;
+      final bgFile = File(bgPath);
+      if (!bgFile.existsSync()) {
+        logger.fatalError('Background image not found: $bgPath');
+        return false;
+      }
+    }
+
+    final platformLogName =
+        flavorName != null ? '${platform.name} [$flavorName]' : platform.name;
+
+    try {
+      logger.info('Running for $platformLogName...');
+
+      // Clean old assets
+      await _assetCleaner.clean(platform, projectRoot, flavorName: flavorName);
+      logger.verbose('  Cleaned old assets for $platformLogName');
+
+      // Generate icons
+      final generator = _iconGenerators[platform];
+      if (generator != null) {
+        await generator.generate(resolvedIcon, projectRoot,
+            flavorName: flavorName);
+        logger.verbose('  Generated icons for $platformLogName');
+      }
+
+      // Update platform config files
+      final updater = _platformUpdaters[platform];
+      if (updater != null) {
+        await updater.update(projectRoot, flavorName: flavorName);
+        logger.verbose('  Updated config for $platformLogName');
+      }
+
+      // Generate splash
+      if (splashConfig != null) {
+        final splashGenerator = _splashGenerators[platform];
+        if (splashGenerator != null) {
+          await splashGenerator.generate(splashConfig, projectRoot,
+              flavorName: flavorName);
+          logger.verbose('  Generated splash for $platformLogName');
+        }
+      }
+
+      logger.info('✓ Completed $platformLogName');
+      return true;
+    } on Exception catch (e) {
+      final platformError = PlatformGenerationException(
+        platform: platform,
+        error: e.toString(),
+      );
+      errors.add(platformError);
+      logger.platformError(platform, platformError.error);
+      return false;
+    }
   }
 
   /// Builds the argument parser.

@@ -26,14 +26,14 @@ class AndroidIconGenerator implements IconGenerator {
   final DefaultImageOptimizer _imageOptimizer;
 
   /// Base resource path relative to the project root.
-  static const _resPath = 'android/app/src/main/res';
+  String _getResPath(String? flavorName) => 'android/app/src/${flavorName ?? "main"}/res';
 
   @override
-  Future<void> generate(ResolvedIconConfig config, String projectRoot) async {
+  Future<void> generate(ResolvedIconConfig config, String projectRoot, {String? flavorName}) async {
     if (config.isAdaptive) {
-      await _generateAdaptiveIcons(config, projectRoot);
+      await _generateAdaptiveIcons(config, projectRoot, flavorName);
     } else if (config.foregroundPath != null) {
-      await _generateStandardIcons(config.foregroundPath!, projectRoot);
+      await _generateStandardIcons(config.foregroundPath!, projectRoot, flavorName);
     }
   }
 
@@ -41,6 +41,7 @@ class AndroidIconGenerator implements IconGenerator {
   Future<void> _generateStandardIcons(
     String imagePath,
     String projectRoot,
+    String? flavorName,
   ) async {
     final sourceImage = await _imageProcessor.loadAndValidate(imagePath);
     final opaqueImage = _imageProcessor.hasTransparency(sourceImage)
@@ -54,7 +55,7 @@ class AndroidIconGenerator implements IconGenerator {
       final resized = _imageProcessor.resize(opaqueImage, size, size);
       final pngBytes = _imageOptimizer.encodePng(resized);
 
-      final outputDir = Directory('$projectRoot/$_resPath/$bucketDir');
+      final outputDir = Directory('$projectRoot/${_getResPath(flavorName)}/$bucketDir');
       if (!outputDir.existsSync()) {
         outputDir.createSync(recursive: true);
       }
@@ -69,6 +70,7 @@ class AndroidIconGenerator implements IconGenerator {
   Future<void> _generateAdaptiveIcons(
     ResolvedIconConfig config,
     String projectRoot,
+    String? flavorName,
   ) async {
     final foregroundImage =
         await _imageProcessor.loadAndValidate(config.foregroundPath!);
@@ -87,7 +89,7 @@ class AndroidIconGenerator implements IconGenerator {
       final resized = _imageProcessor.resize(opaqueComposited, size, size);
       final pngBytes = _imageOptimizer.encodePng(resized);
 
-      final outputDir = Directory('$projectRoot/$_resPath/$bucketDir');
+      final outputDir = Directory('$projectRoot/${_getResPath(flavorName)}/$bucketDir');
       if (!outputDir.existsSync()) {
         outputDir.createSync(recursive: true);
       }
@@ -125,7 +127,7 @@ class AndroidIconGenerator implements IconGenerator {
 
       final pngBytes = _imageOptimizer.encodePng(canvas);
 
-      final outputDir = Directory('$projectRoot/$_resPath/$bucketDir');
+      final outputDir = Directory('$projectRoot/${_getResPath(flavorName)}/$bucketDir');
       if (!outputDir.existsSync()) {
         outputDir.createSync(recursive: true);
       }
@@ -146,7 +148,7 @@ class AndroidIconGenerator implements IconGenerator {
         final resized = _imageProcessor.resize(bgImage, size, size);
         final pngBytes = _imageOptimizer.encodePng(resized);
 
-        final outputDir = Directory('$projectRoot/$_resPath/$bucketDir');
+        final outputDir = Directory('$projectRoot/${_getResPath(flavorName)}/$bucketDir');
         if (!outputDir.existsSync()) {
           outputDir.createSync(recursive: true);
         }
@@ -157,11 +159,11 @@ class AndroidIconGenerator implements IconGenerator {
     }
 
     // Generate the adaptive icon XML descriptor.
-    _generateAdaptiveXml(config, projectRoot);
+    _generateAdaptiveXml(config, projectRoot, flavorName);
 
     // Generate colors.xml if background is a color.
     if (config.background is BackgroundColor) {
-      _generateColorsXml(config.background! as BackgroundColor, projectRoot);
+      _generateColorsXml(config.background! as BackgroundColor, projectRoot, flavorName);
     }
   }
 
@@ -240,8 +242,8 @@ class AndroidIconGenerator implements IconGenerator {
   }
 
   /// Generates the adaptive icon XML descriptor.
-  void _generateAdaptiveXml(ResolvedIconConfig config, String projectRoot) {
-    final outputDir = Directory('$projectRoot/$_resPath/mipmap-anydpi-v26');
+  void _generateAdaptiveXml(ResolvedIconConfig config, String projectRoot, String? flavorName) {
+    final outputDir = Directory('$projectRoot/${_getResPath(flavorName)}/mipmap-anydpi-v26');
     if (!outputDir.existsSync()) {
       outputDir.createSync(recursive: true);
     }
@@ -263,8 +265,8 @@ class AndroidIconGenerator implements IconGenerator {
 
   /// Generates or updates `values/colors.xml` with the adaptive icon
   /// background color.
-  void _generateColorsXml(BackgroundColor background, String projectRoot) {
-    final valuesDir = Directory('$projectRoot/$_resPath/values');
+  void _generateColorsXml(BackgroundColor background, String projectRoot, String? flavorName) {
+    final valuesDir = Directory('$projectRoot/${_getResPath(flavorName)}/values');
     if (!valuesDir.existsSync()) {
       valuesDir.createSync(recursive: true);
     }

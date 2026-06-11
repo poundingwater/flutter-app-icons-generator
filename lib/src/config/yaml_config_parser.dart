@@ -4,6 +4,7 @@ import 'package:yaml/yaml.dart';
 
 import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 import 'package:flutter_app_icons_generator/src/config/config_parser.dart';
+import 'package:flutter_app_icons_generator/src/flavors/flavor_parser.dart';
 import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 import 'package:flutter_app_icons_generator/src/shared/exceptions.dart';
 
@@ -57,17 +58,62 @@ class YamlConfigParser implements ConfigParser {
 
   /// Constructs an [AppIconsConfig] from the parsed YAML map.
   AppIconsConfig _buildConfig(YamlMap yaml) {
-    final iconConfig = _parseIconConfig(yaml);
+    // Determine if we have flavors. If flavors are present, root icon/splash
+    // are only required if there's an unflavored platform, but for simplicity
+    // we can parse them if they exist.
+    IconConfig? iconConfig;
+    try {
+      iconConfig = _parseIconConfig(yaml);
+    } catch (e) {
+      // If flavors exist, we can ignore the missing root icon error.
+      // But we need to ensure at least flavors exist.
+    }
+
     final splashConfig = _parseSplashConfig(yaml);
     final platforms = _parsePlatforms(yaml);
+
+    final flavors = FlavorParser.parseFlavors(
+      yaml,
+      parseIcon: _parseIconConfig,
+      parseSplash: _parseSplashConfig,
+    );
+
+    if (iconConfig == null && flavors.isEmpty) {
+      throw ConfigValidationException(['icon']);
+    }
+
+    // When flavors are configured, platforms that don't support flavors
+    // (macos, web, linux, windows) still need a default icon config.
+    if (flavors.isNotEmpty) {
+      final nonFlavorPlatforms = platforms.where(
+        (p) => p != Platform.android && p != Platform.ios,
+      );
+
+      if (nonFlavorPlatforms.isNotEmpty) {
+        final hasDefaultIcon = iconConfig != null &&
+            (iconConfig.allPlatforms != null ||
+                iconConfig.foregroundPath != null);
+        if (!hasDefaultIcon) {
+          throw ConfigValidationException([
+            'icon (required for platforms that do not support flavors: '
+                '${nonFlavorPlatforms.map((p) => p.name).join(", ")})',
+          ]);
+        }
+      }
+    }
+
+    // Default icon config if missing (only allowed when flavors are present
+    // and all platforms support flavors)
+    iconConfig ??= const IconConfig();
 
     final config = AppIconsConfig(
       icon: iconConfig,
       splash: splashConfig,
+      flavors: flavors,
       platforms: platforms,
     );
 
-    if (!config.isValid) {
+    if (!config.isValid && flavors.isEmpty) {
       throw ConfigValidationException([
         'icon.all_platforms or icon.foreground',
       ]);

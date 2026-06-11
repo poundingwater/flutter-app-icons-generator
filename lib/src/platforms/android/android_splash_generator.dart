@@ -23,16 +23,16 @@ class AndroidSplashGenerator implements SplashGenerator {
   final DefaultImageOptimizer _imageOptimizer;
 
   /// Base resource path relative to the project root.
-  static const _resPath = 'android/app/src/main/res';
+  String _getResPath(String? flavorName) => 'android/app/src/${flavorName ?? "main"}/res';
 
   @override
-  Future<void> generate(SplashConfig config, String projectRoot) async {
+  Future<void> generate(SplashConfig config, String projectRoot, {String? flavorName}) async {
     final sourceImage = await _imageProcessor.loadAndValidate(config.imagePath);
 
     // Use the source image directly — Android handles scaling.
     final pngBytes = _imageOptimizer.encodePng(sourceImage);
 
-    final outputDir = Directory('$projectRoot/$_resPath/drawable');
+    final outputDir = Directory('$projectRoot/${_getResPath(flavorName)}/drawable');
     if (!outputDir.existsSync()) {
       outputDir.createSync(recursive: true);
     }

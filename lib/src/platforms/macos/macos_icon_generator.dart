@@ -33,7 +33,7 @@ class MacosIconGenerator implements IconGenerator {
   static const String icnsFilename = 'app_icon.icns';
 
   @override
-  Future<void> generate(ResolvedIconConfig config, String projectRoot) async {
+  Future<void> generate(ResolvedIconConfig config, String projectRoot, {String? flavorName}) async {
     if (config.foregroundPath == null) {
       throw ArgumentError(
         'ResolvedIconConfig must have foregroundPath set.',

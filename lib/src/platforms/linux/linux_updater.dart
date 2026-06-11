@@ -21,7 +21,7 @@ class LinuxUpdater implements PlatformUpdater {
   ];
 
   @override
-  Future<void> update(String projectRoot) async {
+  Future<void> update(String projectRoot, {String? flavorName}) async {
     final linuxDir = Directory('$projectRoot/linux');
 
     // If the linux directory does not exist, the platform is not initialized.
