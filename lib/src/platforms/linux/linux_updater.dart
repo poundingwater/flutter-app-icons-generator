@@ -51,10 +51,19 @@ class LinuxUpdater implements PlatformUpdater {
 
   /// Finds the first matching runner file in [linuxDir].
   File? _findRunnerFile(Directory linuxDir) {
-    for (final name in _runnerFileNames) {
-      final file = File('${linuxDir.path}/$name');
-      if (file.existsSync()) {
-        return file;
+    // Check both the linux root and linux/runner subdirectory.
+    final searchDirs = [
+      linuxDir,
+      Directory('${linuxDir.path}/runner'),
+    ];
+
+    for (final dir in searchDirs) {
+      if (!dir.existsSync()) continue;
+      for (final name in _runnerFileNames) {
+        final file = File('${dir.path}/$name');
+        if (file.existsSync()) {
+          return file;
+        }
       }
     }
     return null;
