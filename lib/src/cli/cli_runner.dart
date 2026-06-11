@@ -47,6 +47,7 @@ class CliRunner {
   /// Creates a [CliRunner] with optional dependency overrides.
   ///
   /// If dependencies are not provided, sensible defaults are used.
+  /// [promptOverride] can be provided in tests to bypass interactive stdin.
   CliRunner({
     ConfigParser? configParser,
     ConfigPrinter? configPrinter,
@@ -54,12 +55,14 @@ class CliRunner {
     Map<Platform, IconGenerator>? iconGenerators,
     Map<Platform, PlatformUpdater>? platformUpdaters,
     Map<Platform, SplashGenerator>? splashGenerators,
+    String? Function()? promptOverride,
   })  : _configParser = configParser ?? const YamlConfigParser(),
         _configPrinter = configPrinter ?? YamlConfigPrinter(),
         _assetCleaner = assetCleaner ?? DefaultAssetCleaner(),
         _iconGenerators = iconGenerators ?? _defaultIconGenerators(),
         _platformUpdaters = platformUpdaters ?? _defaultPlatformUpdaters(),
-        _splashGenerators = splashGenerators ?? _defaultSplashGenerators();
+        _splashGenerators = splashGenerators ?? _defaultSplashGenerators(),
+        _promptOverride = promptOverride;
 
   final ConfigParser _configParser;
   final ConfigPrinter _configPrinter;
@@ -67,6 +70,13 @@ class CliRunner {
   final Map<Platform, IconGenerator> _iconGenerators;
   final Map<Platform, PlatformUpdater> _platformUpdaters;
   final Map<Platform, SplashGenerator> _splashGenerators;
+  final String? Function()? _promptOverride;
+
+  /// Reads a line from stdin, or uses the override if provided.
+  String? _readLine() {
+    if (_promptOverride != null) return _promptOverride!();
+    return stdin.readLineSync();
+  }
 
   /// Runs the CLI with the given [arguments].
   ///
@@ -108,9 +118,13 @@ class CliRunner {
     final configFile = File(configPath);
 
     if (configFile.existsSync()) {
-      final exception = ConfigExistsException(configPath);
-      logger.fatalError(exception.message);
-      return exception.exitCode;
+      stdout.write('⚠️  Config file already exists: $configPath\n'
+          'Overwrite? [y/N] ');
+      final response = _readLine()?.trim().toLowerCase() ?? '';
+      if (response != 'y' && response != 'yes') {
+        logger.info('Aborted.');
+        return 0;
+      }
     }
 
     final defaultContent = _configPrinter.printDefault();
@@ -139,7 +153,7 @@ class CliRunner {
       }
       logger.info('');
       stdout.write('These will be removed and regenerated. Continue? [y/N] ');
-      final response = stdin.readLineSync()?.trim().toLowerCase() ?? '';
+      final response = _readLine()?.trim().toLowerCase() ?? '';
       if (response != 'y' && response != 'yes') {
         logger.info('Aborted.');
         return 0;

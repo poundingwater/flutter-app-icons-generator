@@ -257,7 +257,7 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       expect(content, contains('image:'));
     });
 
-    test('fails when config file already exists', () async {
+    test('aborts when config file already exists and user declines', () async {
       final initDir = Directory.systemTemp.createTempSync('init_exists_test_');
       addTearDown(() => initDir.deleteSync(recursive: true));
 
@@ -265,10 +265,18 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       File('${initDir.path}/flutter_app_icons_generator.yml')
           .writeAsStringSync('icon:\n  image: test.png\n');
 
-      final runner = CliRunner();
+      // Use promptOverride to simulate user declining.
+      final runner = CliRunner(promptOverride: () => 'N');
       final exitCode = await runner.run(['--init', '-p', initDir.path]);
-      expect(exitCode, equals(1),
-          reason: '--init should fail with exit code 1 when config exists');
+      expect(exitCode, equals(0),
+          reason:
+              '--init should abort with exit code 0 when user declines overwrite');
+
+      // Verify the original file content was preserved.
+      final content = File('${initDir.path}/flutter_app_icons_generator.yml')
+          .readAsStringSync();
+      expect(content, contains('image: test.png'),
+          reason: 'Original config file should not be overwritten');
     });
   });
 }
