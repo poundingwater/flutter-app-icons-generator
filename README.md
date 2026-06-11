@@ -1,17 +1,19 @@
 # flutter_app_icons_generator
 
-A Dart CLI tool that generates platform-specific app icons and native splash screens for Flutter projects. One config file, all platforms handled automatically.
+A Dart CLI tool that generates platform-specific app icons and native splash screens for Flutter projects with full app flavor support. One config file, all platforms and flavors handled automatically.
 
 ## Features
 
 - Generates correctly sized, optimized icons for **iOS**, **Android**, **macOS**, **Linux**, **Windows**, and **Web**
 - Generates native splash screens for all platforms
+- **App Flavors** — generate per-flavor icons for Android and iOS with automatic build system configuration
 - Single `foreground` + `background` approach works across all platforms
 - Platform-aware compositing — the package decides how to use your assets per platform
 - Automatic safe-zone padding — foreground is inset to avoid clipping by platform masks
 - Supports platform-specific overrides when you need fine-grained control
 - Automatically removes alpha channels where required (iOS, macOS)
 - Preserves transparency where expected (Windows, Web favicon)
+- Detects existing generated assets and prompts before overwriting
 - Validates source images before cleaning existing assets
 - Updates platform configuration files (manifests, plists, etc.) automatically
 
@@ -79,6 +81,122 @@ dart run flutter_app_icons_generator
 ```bash
 dart run flutter_app_icons_generator --verbose
 ```
+
+## App Flavors
+
+App flavors let you generate different icons for different environments (dev, staging, prod) with automatic platform build system configuration — no manual Xcode or Gradle setup required.
+
+### Configuration
+
+```yaml
+icon:
+  foreground: assets/foreground.png
+  background: assets/background.png
+
+flavors:
+  dev:
+    bundle_identifier: com.example.myapp.dev
+    icon:
+      foreground: assets/dev_foreground.png
+      background: "#4CAF50"
+  prod:
+    bundle_identifier: com.example.myapp
+    icon:
+      foreground: assets/prod_foreground.png
+      background: "#1e1e2e"
+
+platforms:
+  - ios
+  - android
+```
+
+### Flavor requirements
+
+| Field                              | Required | Description                                                                                               |
+| ---------------------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| `flavors.<name>.bundle_identifier` | Yes      | Unique app ID for this flavor. Used as `applicationId` on Android and `PRODUCT_BUNDLE_IDENTIFIER` on iOS. |
+| `flavors.<name>.icon`              | Yes      | Icon configuration (same structure as top-level `icon`).                                                  |
+| `flavors.<name>.splash`            | No       | Optional splash screen for this flavor.                                                                   |
+
+**Validation rules:**
+
+- Every flavor must have a `bundle_identifier`
+- Each `bundle_identifier` must be unique across all flavors
+- When flavors are configured, the top-level `icon` is still required if non-flavor platforms (macOS, web, linux, windows) are in the platforms list
+
+### What gets generated
+
+#### Android
+
+For each flavor, the generator creates resources in `android/app/src/{flavor}/res/`:
+
+- Standard launcher icons in all density buckets (`mipmap-mdpi` through `mipmap-xxxhdpi`)
+- Adaptive icon layers (foreground/background PNGs + XML descriptor)
+- `values/colors.xml` with the background color (if using a hex color background)
+
+It also configures `build.gradle.kts` (or `build.gradle`) with:
+
+```kotlin
+flavorDimensions += listOf("app")
+productFlavors {
+    create("dev") {
+        dimension = "app"
+        applicationId = "com.example.myapp.dev"
+    }
+    create("prod") {
+        dimension = "app"
+        applicationId = "com.example.myapp"
+    }
+}
+```
+
+#### iOS
+
+For each flavor, the generator creates:
+
+- `ios/Runner/Assets.xcassets/AppIcon-{flavor}.appiconset/` — 1024x1024 icon + Contents.json
+- `ios/Flutter/{flavor}-Debug.xcconfig` — overrides bundle ID + icon name, includes `Debug.xcconfig`
+- `ios/Flutter/{flavor}-Release.xcconfig` — overrides bundle ID + icon name, includes `Release.xcconfig`
+- `ios/Flutter/{flavor}-Profile.xcconfig` — overrides bundle ID + icon name, includes `Release.xcconfig`
+- `ios/Runner.xcodeproj/xcshareddata/xcschemes/{flavor}.xcscheme` — Xcode scheme for this flavor
+
+The xcconfig files set:
+
+```
+PRODUCT_BUNDLE_IDENTIFIER = com.example.myapp.dev
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-dev
+```
+
+The `project.pbxproj` retains the default `AppIcon` reference — flavor-specific overrides are applied via the xcconfig/scheme mechanism.
+
+### Running with flavors
+
+After generation, use Flutter's `--flavor` flag:
+
+```bash
+flutter run --flavor dev
+flutter run --flavor prod
+flutter build ios --flavor prod
+flutter build appbundle --flavor prod
+```
+
+### Non-flavor platforms
+
+Platforms that don't support flavors (macOS, web, linux, windows) always use the top-level `icon` configuration. When flavors are configured and these platforms are in the list, the top-level `icon` section is required.
+
+## Existing Asset Detection
+
+When generated assets already exist, the CLI detects them and prompts for confirmation before overwriting:
+
+```
+⚠️  Existing generated assets detected:
+   • iOS [dev] AppIcon (AppIcon-dev.appiconset)
+   • iOS [prod] AppIcon (AppIcon-prod.appiconset)
+
+These will be removed and regenerated. Continue? [y/N]
+```
+
+This prevents accidental overwrites and makes the regeneration workflow explicit.
 
 ## How It Works
 
@@ -152,6 +270,31 @@ splash:
 | `splash.image`            | String | Yes      | Path to splash screen source image     |
 | `splash.background_color` | String | No       | Hex background color for splash screen |
 
+### Flavors Configuration
+
+```yaml
+flavors:
+  dev:
+    bundle_identifier: com.example.myapp.dev
+    icon:
+      foreground: assets/dev_foreground.png
+      background: "#4CAF50"
+    splash:
+      image: assets/dev_splash.png
+      background_color: "#000000"
+  prod:
+    bundle_identifier: com.example.myapp
+    icon:
+      foreground: assets/prod_foreground.png
+      background: "#1e1e2e"
+```
+
+| Field                              | Type   | Required | Description                                          |
+| ---------------------------------- | ------ | -------- | ---------------------------------------------------- |
+| `flavors.<name>.bundle_identifier` | String | Yes      | Unique application ID for this flavor                |
+| `flavors.<name>.icon`              | Map    | Yes      | Icon config (same structure as top-level `icon`)     |
+| `flavors.<name>.splash`            | Map    | No       | Splash config (same structure as top-level `splash`) |
+
 ### Platforms
 
 ```yaml
@@ -192,6 +335,17 @@ Defaults to `android` and `ios` when omitted. Add any combination of the 6 suppo
 | Windows  | `windows/runner/resources/app_icon.ico`                                     | ICO (16–256px)   |
 | Web      | `web/favicon.ico` + `web/icons/Icon-{192,512}.png` + maskable variants      | ICO + PNG        |
 | Linux    | `linux/app_icon.png`                                                        | PNG (512x512)    |
+
+## CLI Options
+
+```
+Usage: dart run flutter_app_icons_generator [options]
+
+--init           Generate a default flutter_app_icons_generator.yml config file.
+-v, --verbose    Enable verbose output with detailed file paths.
+-p, --project-root  Path to the Flutter project root (defaults to current directory).
+-h, --help       Show usage information.
+```
 
 ## License
 

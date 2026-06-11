@@ -130,6 +130,23 @@ class CliRunner {
       return e.exitCode;
     }
 
+    // Detect existing generated assets and prompt user for confirmation.
+    final existingAssets = _detectExistingAssets(config, projectRoot);
+    if (existingAssets.isNotEmpty) {
+      logger.info('⚠️  Existing generated assets detected:');
+      for (final asset in existingAssets) {
+        logger.info('   • $asset');
+      }
+      logger.info('');
+      stdout.write('These will be removed and regenerated. Continue? [y/N] ');
+      final response = stdin.readLineSync()?.trim().toLowerCase() ?? '';
+      if (response != 'y' && response != 'yes') {
+        logger.info('Aborted.');
+        return 0;
+      }
+      logger.info('');
+    }
+
     final stopwatch = Stopwatch()..start();
     var totalFiles = 0;
     final errors = <PlatformGenerationException>[];
@@ -416,5 +433,95 @@ class CliRunner {
         imageOptimizer: imageOptimizer,
       ),
     };
+  }
+
+  /// Detects existing generated assets for the configured platforms.
+  ///
+  /// Returns a list of human-readable descriptions of found assets.
+  /// This enables prompting the user before overwriting.
+  List<String> _detectExistingAssets(
+      AppIconsConfig config, String projectRoot) {
+    final detected = <String>[];
+
+    for (final platform in config.platforms) {
+      final supportsFlavors =
+          platform == Platform.android || platform == Platform.ios;
+
+      if (config.flavors.isNotEmpty && supportsFlavors) {
+        // Check for flavor-specific assets.
+        for (final flavorName in config.flavors.keys) {
+          final assets =
+              _detectPlatformAssets(platform, projectRoot, flavorName);
+          detected.addAll(assets);
+        }
+      } else {
+        final assets = _detectPlatformAssets(platform, projectRoot, null);
+        detected.addAll(assets);
+      }
+    }
+
+    return detected;
+  }
+
+  /// Detects existing generated assets for a specific platform.
+  List<String> _detectPlatformAssets(
+      Platform platform, String projectRoot, String? flavorName) {
+    final detected = <String>[];
+
+    switch (platform) {
+      case Platform.android:
+        final resDir =
+            '$projectRoot/android/app/src/${flavorName ?? "main"}/res';
+        final mipmapDir = Directory('$resDir/mipmap-hdpi');
+        if (mipmapDir.existsSync()) {
+          final icLauncher = File('$resDir/mipmap-hdpi/ic_launcher.png');
+          if (icLauncher.existsSync()) {
+            final label = flavorName != null
+                ? 'Android [$flavorName] mipmap icons'
+                : 'Android mipmap icons';
+            detected.add(label);
+          }
+        }
+
+      case Platform.ios:
+        final iconName = flavorName != null ? 'AppIcon-$flavorName' : 'AppIcon';
+        final assetDir =
+            '$projectRoot/ios/Runner/Assets.xcassets/$iconName.appiconset';
+        final iconFile = File('$assetDir/app_icon_1024.png');
+        if (iconFile.existsSync()) {
+          final label = flavorName != null
+              ? 'iOS [$flavorName] AppIcon ($iconName.appiconset)'
+              : 'iOS AppIcon (AppIcon.appiconset)';
+          detected.add(label);
+        }
+
+      case Platform.macos:
+        final icnsFile = File(
+            '$projectRoot/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon.icns');
+        if (icnsFile.existsSync()) {
+          detected.add('macOS AppIcon (app_icon.icns)');
+        }
+
+      case Platform.web:
+        final faviconFile = File('$projectRoot/web/favicon.ico');
+        if (faviconFile.existsSync()) {
+          detected.add('Web icons (favicon.ico, PWA icons)');
+        }
+
+      case Platform.linux:
+        final linuxIcon = File('$projectRoot/linux/app_icon.png');
+        if (linuxIcon.existsSync()) {
+          detected.add('Linux icon (app_icon.png)');
+        }
+
+      case Platform.windows:
+        final windowsIcon =
+            File('$projectRoot/windows/runner/resources/app_icon.ico');
+        if (windowsIcon.existsSync()) {
+          detected.add('Windows icon (app_icon.ico)');
+        }
+    }
+
+    return detected;
   }
 }

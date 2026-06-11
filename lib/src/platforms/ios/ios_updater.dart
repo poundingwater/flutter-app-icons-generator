@@ -30,12 +30,16 @@ class IosUpdater implements PlatformUpdater {
       return;
     }
 
+    // When running with flavors, don't modify project.pbxproj here.
+    // The configureFlavors() method handles per-flavor settings via xcconfigs
+    // and schemes. The pbxproj should keep the default AppIcon reference.
+    if (flavorName != null) {
+      return;
+    }
+
     var content = file.readAsStringSync();
 
-    final expectedIconName =
-        flavorName != null ? 'AppIcon-$flavorName' : 'AppIcon';
-    final expectedSetting =
-        'ASSETCATALOG_COMPILER_APPICON_NAME = $expectedIconName';
+    const expectedSetting = 'ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon';
 
     // Check if the correct setting already exists.
     if (content.contains('$expectedSetting;')) {
