@@ -6,7 +6,7 @@ A Dart CLI tool that generates platform-specific app icons and native splash scr
 
 - Generates correctly sized, optimized icons for **iOS**, **Android**, **macOS**, **Linux**, **Windows**, and **Web**
 - Generates native splash screens for all platforms
-- **App Flavors** — generate per-flavor icons for Android and iOS with automatic build system configuration
+- **App Flavors** — generate per-flavor icons for Android, iOS, and macOS with automatic build system configuration
 - Single `foreground` + `background` approach works across all platforms
 - Platform-aware compositing — the package decides how to use your assets per platform
 - Automatic safe-zone padding — foreground is inset to avoid clipping by platform masks
@@ -108,21 +108,22 @@ flavors:
 platforms:
   - ios
   - android
+  - macos
 ```
 
 ### Flavor requirements
 
-| Field                              | Required | Description                                                                                               |
-| ---------------------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| `flavors.<name>.bundle_identifier` | Yes      | Unique app ID for this flavor. Used as `applicationId` on Android and `PRODUCT_BUNDLE_IDENTIFIER` on iOS. |
-| `flavors.<name>.icon`              | Yes      | Icon configuration (same structure as top-level `icon`).                                                  |
-| `flavors.<name>.splash`            | No       | Optional splash screen for this flavor.                                                                   |
+| Field                              | Required | Description                                                                                                     |
+| ---------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------- |
+| `flavors.<name>.bundle_identifier` | Yes      | Unique app ID for this flavor. Used as `applicationId` on Android and `PRODUCT_BUNDLE_IDENTIFIER` on iOS/macOS. |
+| `flavors.<name>.icon`              | Yes      | Icon configuration (same structure as top-level `icon`).                                                        |
+| `flavors.<name>.splash`            | No       | Optional splash screen for this flavor.                                                                         |
 
 **Validation rules:**
 
 - Every flavor must have a `bundle_identifier`
 - Each `bundle_identifier` must be unique across all flavors
-- When flavors are configured, the top-level `icon` is still required if non-flavor platforms (macOS, web, linux, windows) are in the platforms list
+- When flavors are configured, the top-level `icon` is still required if non-flavor platforms (web, linux, windows) are in the platforms list
 
 ### What gets generated
 
@@ -169,6 +170,16 @@ ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-dev
 
 The `project.pbxproj` retains the default `AppIcon` reference — flavor-specific overrides are applied via the xcconfig/scheme mechanism.
 
+#### macOS
+
+macOS uses the same scheme/xcconfig mechanism as iOS. For each flavor, the generator creates:
+
+- `macos/Runner/Assets.xcassets/AppIcon-{flavor}.appiconset/` — ICNS icon (multi-size) + Contents.json
+- `macos/Flutter/{flavor}-Debug.xcconfig` — overrides bundle ID + icon name, includes `Flutter-Debug.xcconfig`
+- `macos/Flutter/{flavor}-Release.xcconfig` — overrides bundle ID + icon name, includes `Flutter-Release.xcconfig`
+- `macos/Flutter/{flavor}-Profile.xcconfig` — overrides bundle ID + icon name, includes `Flutter-Release.xcconfig`
+- `macos/Runner.xcodeproj/xcshareddata/xcschemes/{flavor}.xcscheme` — Xcode scheme for this flavor
+
 ### Running with flavors
 
 After generation, use Flutter's `--flavor` flag:
@@ -177,12 +188,13 @@ After generation, use Flutter's `--flavor` flag:
 flutter run --flavor dev
 flutter run --flavor prod
 flutter build ios --flavor prod
+flutter build macos --flavor prod
 flutter build appbundle --flavor prod
 ```
 
 ### Non-flavor platforms
 
-Platforms that don't support flavors (macOS, web, linux, windows) always use the top-level `icon` configuration. When flavors are configured and these platforms are in the list, the top-level `icon` section is required.
+Platforms that don't support flavors (web, linux, windows) always use the top-level `icon` configuration. When flavors are configured and these platforms are in the list, the top-level `icon` section is required.
 
 ## Existing Asset Detection
 

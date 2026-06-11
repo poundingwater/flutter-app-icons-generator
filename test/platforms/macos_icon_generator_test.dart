@@ -13,6 +13,9 @@ void main() {
   late Directory tempDir;
   late String testImagePath;
 
+  /// Default output path used by the macOS icon generator (no flavor).
+  const macosOutputPath = 'macos/Runner/Assets.xcassets/AppIcon.appiconset';
+
   setUp(() {
     generator = MacosIconGenerator(
       imageProcessor: DefaultImageProcessor(),
@@ -41,7 +44,7 @@ void main() {
       await generator.generate(config, tempDir.path);
 
       final outputDir = Directory(
-        '${tempDir.path}/${MacosIconGenerator.outputPath}',
+        '${tempDir.path}/${macosOutputPath}',
       );
       expect(outputDir.existsSync(), isTrue);
 
@@ -63,7 +66,7 @@ void main() {
       await generator.generate(config, tempDir.path);
 
       final outputDir = Directory(
-        '${tempDir.path}/${MacosIconGenerator.outputPath}',
+        '${tempDir.path}/${macosOutputPath}',
       );
       final icnsFile = File('${outputDir.path}/app_icon.icns');
       final bytes = icnsFile.readAsBytesSync();
@@ -80,7 +83,7 @@ void main() {
       await generator.generate(config, tempDir.path);
 
       final outputDir = Directory(
-        '${tempDir.path}/${MacosIconGenerator.outputPath}',
+        '${tempDir.path}/${macosOutputPath}',
       );
       final contentsFile = File('${outputDir.path}/Contents.json');
       expect(contentsFile.existsSync(), isTrue);
@@ -126,7 +129,7 @@ void main() {
       await generator.generate(config, tempDir.path);
 
       final outputDir = Directory(
-        '${tempDir.path}/${MacosIconGenerator.outputPath}',
+        '${tempDir.path}/${macosOutputPath}',
       );
       expect(outputDir.existsSync(), isTrue);
 

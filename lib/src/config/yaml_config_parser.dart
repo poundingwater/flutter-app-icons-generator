@@ -83,10 +83,11 @@ class YamlConfigParser implements ConfigParser {
     }
 
     // When flavors are configured, platforms that don't support flavors
-    // (macos, web, linux, windows) still need a default icon config.
+    // (web, linux, windows) still need a default icon config.
     if (flavors.isNotEmpty) {
       final nonFlavorPlatforms = platforms.where(
-        (p) => p != Platform.android && p != Platform.ios,
+        (p) =>
+            p != Platform.android && p != Platform.ios && p != Platform.macos,
       );
 
       if (nonFlavorPlatforms.isNotEmpty) {

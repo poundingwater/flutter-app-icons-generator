@@ -13,7 +13,8 @@ abstract class AssetCleaner {
   /// This ensures that stale or default assets do not persist alongside
   ///
   /// [flavorName] is the optional name of the flavor to clean.
-  Future<void> clean(Platform platform, String projectRoot, {String? flavorName});
+  Future<void> clean(Platform platform, String projectRoot,
+      {String? flavorName});
 }
 
 /// Default implementation of [AssetCleaner] that removes platform-specific
@@ -23,7 +24,8 @@ abstract class AssetCleaner {
 /// do not exist.
 class DefaultAssetCleaner implements AssetCleaner {
   @override
-  Future<void> clean(Platform platform, String projectRoot, {String? flavorName}) async {
+  Future<void> clean(Platform platform, String projectRoot,
+      {String? flavorName}) async {
     switch (platform) {
       case Platform.android:
         _cleanAndroid(projectRoot, flavorName);
@@ -71,8 +73,9 @@ class DefaultAssetCleaner implements AssetCleaner {
   /// Deletes all contents of the macOS AppIcon.appiconset directory,
   /// but preserves the directory itself.
   void _cleanMacos(String projectRoot, String? flavorName) {
+    final iconName = flavorName != null ? 'AppIcon-$flavorName' : 'AppIcon';
     final appiconsetDir =
-        '$projectRoot/macos/Runner/Assets.xcassets/AppIcon.appiconset';
+        '$projectRoot/macos/Runner/Assets.xcassets/$iconName.appiconset';
     _deleteDirectoryContents(appiconsetDir);
   }
 

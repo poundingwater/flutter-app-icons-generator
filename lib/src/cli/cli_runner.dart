@@ -153,8 +153,9 @@ class CliRunner {
 
     // Process each platform.
     for (final platform in config.platforms) {
-      final supportsFlavors =
-          platform == Platform.android || platform == Platform.ios;
+      final supportsFlavors = platform == Platform.android ||
+          platform == Platform.ios ||
+          platform == Platform.macos;
 
       if (config.flavors.isNotEmpty && supportsFlavors) {
         for (final entry in config.flavors.entries) {
@@ -251,6 +252,21 @@ class CliRunner {
       } on Exception catch (e) {
         logger.platformError(
             Platform.ios, 'Failed to configure iOS flavor settings: $e');
+      }
+    }
+
+    // macOS: configure xcconfigs and schemes
+    if (config.platforms.contains(Platform.macos)) {
+      try {
+        final macosUpdater = _platformUpdaters[Platform.macos] as MacosUpdater?;
+        if (macosUpdater != null) {
+          await macosUpdater.configureFlavors(projectRoot, config.flavors);
+          logger
+              .verbose('  Configured macOS xcconfigs and schemes for flavors');
+        }
+      } on Exception catch (e) {
+        logger.platformError(
+            Platform.macos, 'Failed to configure macOS flavor settings: $e');
       }
     }
   }
@@ -444,8 +460,9 @@ class CliRunner {
     final detected = <String>[];
 
     for (final platform in config.platforms) {
-      final supportsFlavors =
-          platform == Platform.android || platform == Platform.ios;
+      final supportsFlavors = platform == Platform.android ||
+          platform == Platform.ios ||
+          platform == Platform.macos;
 
       if (config.flavors.isNotEmpty && supportsFlavors) {
         // Check for flavor-specific assets.
@@ -496,10 +513,14 @@ class CliRunner {
         }
 
       case Platform.macos:
+        final iconName = flavorName != null ? 'AppIcon-$flavorName' : 'AppIcon';
         final icnsFile = File(
-            '$projectRoot/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon.icns');
+            '$projectRoot/macos/Runner/Assets.xcassets/$iconName.appiconset/app_icon.icns');
         if (icnsFile.existsSync()) {
-          detected.add('macOS AppIcon (app_icon.icns)');
+          final label = flavorName != null
+              ? 'macOS [$flavorName] AppIcon ($iconName.appiconset)'
+              : 'macOS AppIcon (app_icon.icns)';
+          detected.add(label);
         }
 
       case Platform.web:
