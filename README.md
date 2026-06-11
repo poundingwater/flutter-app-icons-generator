@@ -2,10 +2,20 @@
 
 A Dart CLI tool that generates platform-specific app icons and native splash screens for Flutter projects with full app flavor support. One config file, all platforms and flavors handled automatically.
 
+> **⚠️ Pre-release notice**
+>
+> This package is in active development (`0.1.0-dev`). The following are work-in-progress:
+>
+> - **Splash screen generation** — the config is parsed but splash assets are not fully production-tested across all platforms yet.
+> - **Web platform flavor support** — web does not support per-flavor icons. The top-level `icon` is always used.
+> - **Linux/Windows flavor support** — same as web, flavors are not applicable to these platforms.
+>
+> Icon generation for all 6 platforms (with and without flavors on Android, iOS, macOS) is fully functional and tested.
+
 ## Features
 
 - Generates correctly sized, optimized icons for **iOS**, **Android**, **macOS**, **Linux**, **Windows**, and **Web**
-- Generates native splash screens for all platforms
+- 🚧 Generates native splash screens for all platforms _(work-in-progress)_
 - **App Flavors** — generate per-flavor icons for Android, iOS, and macOS with automatic build system configuration
 - Single `foreground` + `background` approach works across all platforms
 - Platform-aware compositing — the package decides how to use your assets per platform
@@ -16,6 +26,17 @@ A Dart CLI tool that generates platform-specific app icons and native splash scr
 - Detects existing generated assets and prompts before overwriting
 - Validates source images before cleaning existing assets
 - Updates platform configuration files (manifests, plists, etc.) automatically
+
+## Platform Support
+
+| Platform | Icons | Flavors                | Splash |
+| -------- | ----- | ---------------------- | ------ |
+| Android  | ✅    | ✅                     | 🚧     |
+| iOS      | ✅    | ✅                     | 🚧     |
+| macOS    | ✅    | ✅                     | 🚧     |
+| Web      | ✅    | ❌ (uses default icon) | 🚧     |
+| Linux    | ✅    | ❌ (uses default icon) | 🚧     |
+| Windows  | ✅    | ❌ (uses default icon) | 🚧     |
 
 ## Installation
 
