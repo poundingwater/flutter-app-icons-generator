@@ -30,3 +30,4 @@ export 'src/cli/logger.dart';
 // Shared
 export 'src/shared/constants.dart';
 export 'src/shared/exceptions.dart';
+export 'src/shared/launch_json_generator.dart';

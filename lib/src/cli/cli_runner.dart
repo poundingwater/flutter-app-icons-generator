@@ -34,6 +34,7 @@ import 'package:flutter_app_icons_generator/src/platforms/windows/windows_splash
 import 'package:flutter_app_icons_generator/src/platforms/windows/windows_updater.dart';
 import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 import 'package:flutter_app_icons_generator/src/shared/exceptions.dart';
+import 'package:flutter_app_icons_generator/src/shared/launch_json_generator.dart';
 
 /// Default config file name.
 const String _configFileName = 'flutter_app_icons_generator.yml';
@@ -55,6 +56,7 @@ class CliRunner {
     Map<Platform, IconGenerator>? iconGenerators,
     Map<Platform, PlatformUpdater>? platformUpdaters,
     Map<Platform, SplashGenerator>? splashGenerators,
+    LaunchJsonGenerator? launchJsonGenerator,
     String? Function()? promptOverride,
   })  : _configParser = configParser ?? const YamlConfigParser(),
         _configPrinter = configPrinter ?? YamlConfigPrinter(),
@@ -62,6 +64,8 @@ class CliRunner {
         _iconGenerators = iconGenerators ?? _defaultIconGenerators(),
         _platformUpdaters = platformUpdaters ?? _defaultPlatformUpdaters(),
         _splashGenerators = splashGenerators ?? _defaultSplashGenerators(),
+        _launchJsonGenerator =
+            launchJsonGenerator ?? const LaunchJsonGenerator(),
         _promptOverride = promptOverride;
 
   final ConfigParser _configParser;
@@ -70,6 +74,7 @@ class CliRunner {
   final Map<Platform, IconGenerator> _iconGenerators;
   final Map<Platform, PlatformUpdater> _platformUpdaters;
   final Map<Platform, SplashGenerator> _splashGenerators;
+  final LaunchJsonGenerator _launchJsonGenerator;
   final String? Function()? _promptOverride;
 
   /// Reads a line from stdin, or uses the override if provided.
@@ -216,6 +221,20 @@ class CliRunner {
         config.flavors.values.every((f) => f.splash == null)) {
       logger
           .info('ℹ Splash screen not configured — skipping splash generation.');
+    }
+
+    // Generate .vscode/launch.json for IDE support when flavors are configured.
+    if (config.flavors.isNotEmpty) {
+      final wrote = _launchJsonGenerator.generate(
+        projectRoot,
+        config.flavors.keys.toSet(),
+      );
+      if (wrote) {
+        logger.info('✓ Generated .vscode/launch.json with flavor configurations');
+      } else {
+        logger.verbose(
+            '  Skipped launch.json — file exists with user modifications');
+      }
     }
 
     stopwatch.stop();
