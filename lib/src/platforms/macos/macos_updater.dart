@@ -7,7 +7,9 @@ import 'package:flutter_app_icons_generator/src/flavors/flavor_model.dart';
 ///
 /// For non-flavor builds:
 /// Ensures `ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon` is present in the
-/// Xcode project build settings (`project.pbxproj`).
+/// Xcode project build settings (`project.pbxproj`). The asset catalog
+/// approach (individual PNGs in `.appiconset`) is the modern Apple-recommended
+/// way to manage icons — Xcode generates the `.icns` automatically at build time.
 ///
 /// For flavor builds:
 /// Configures per-flavor xcconfig files and Xcode schemes with the correct

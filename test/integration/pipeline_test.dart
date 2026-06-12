@@ -142,20 +142,24 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       // ===== Verify macOS icons =====
       final macosAssetPath =
           '${tempDir.path}/macos/Runner/Assets.xcassets/AppIcon.appiconset';
-      final macosIcnsFile = File('$macosAssetPath/app_icon.icns');
-      expect(macosIcnsFile.existsSync(), isTrue,
-          reason: 'macOS app_icon.icns should exist');
 
-      // Verify ICNS magic bytes.
-      final icnsBytes = macosIcnsFile.readAsBytesSync();
-      expect(icnsBytes[0], 0x69); // 'i'
-      expect(icnsBytes[1], 0x63); // 'c'
-      expect(icnsBytes[2], 0x6E); // 'n'
-      expect(icnsBytes[3], 0x73); // 's'
+      // Verify individual PNG files exist in asset catalog.
+      final macosPngFile = File('$macosAssetPath/app_icon_128x128.png');
+      expect(macosPngFile.existsSync(), isTrue,
+          reason: 'macOS 128x128 PNG should exist in asset catalog');
+
+      final macos512File = File('$macosAssetPath/app_icon_512x512@2x.png');
+      expect(macos512File.existsSync(), isTrue,
+          reason: 'macOS 512x512@2x PNG should exist in asset catalog');
 
       final macosContentsFile = File('$macosAssetPath/Contents.json');
       expect(macosContentsFile.existsSync(), isTrue,
           reason: 'macOS Contents.json should exist');
+
+      // No standalone .icns file at macos/ level (asset catalog approach).
+      final macosIcnsFile = File('${tempDir.path}/macos/AppIcon.icns');
+      expect(macosIcnsFile.existsSync(), isFalse,
+          reason: 'Standalone .icns should not exist with asset catalog approach');
 
       // ===== Verify Web icons =====
       final webPath = '${tempDir.path}/web';
