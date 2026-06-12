@@ -176,16 +176,41 @@ class MacosPbxprojPatcher {
       );
     }
 
-    // Replace quoted name.
-    block = block.replaceFirst(
-      RegExp(r'name = "[^"]+";'),
-      'name = "$newName";',
+    // Remove settings that should be controlled by the xcconfig.
+    // Build settings in pbxproj override xcconfig values, so these must
+    // be removed for the flavor xcconfig to take effect.
+    block = block.replaceAll(
+      RegExp(r'\n\s*ASSETCATALOG_COMPILER_APPICON_NAME = [^;]+;'),
+      '',
     );
-    // Replace unquoted name (e.g., name = Debug;).
-    block = block.replaceFirst(
-      RegExp(r'name = \w+;'),
-      'name = "$newName";',
+    block = block.replaceAll(
+      RegExp(r'\n\s*PRODUCT_BUNDLE_IDENTIFIER = [^;]+;'),
+      '',
     );
+
+    // Replace the configuration name — the standalone `name = ...;` field.
+    // This is distinct from PRODUCT_NAME etc. because it appears as just
+    // `name` (no prefix) at the end of the block. We find the LAST occurrence
+    // which is always the config name, not a buildSettings field.
+    final nameQuotedPattern = RegExp(r'\n(\t+)name = "[^"]*";\n');
+    final nameUnquotedPattern = RegExp(r'\n(\t+)name = \w+;\n');
+
+    final quotedMatches = nameQuotedPattern.allMatches(block).toList();
+    final unquotedMatches = nameUnquotedPattern.allMatches(block).toList();
+
+    if (quotedMatches.isNotEmpty) {
+      final lastMatch = quotedMatches.last;
+      final indent = lastMatch.group(1)!;
+      block = block.substring(0, lastMatch.start) +
+          '\n${indent}name = "$newName";\n' +
+          block.substring(lastMatch.end);
+    } else if (unquotedMatches.isNotEmpty) {
+      final lastMatch = unquotedMatches.last;
+      final indent = lastMatch.group(1)!;
+      block = block.substring(0, lastMatch.start) +
+          '\n${indent}name = "$newName";\n' +
+          block.substring(lastMatch.end);
+    }
 
     return block;
   }
