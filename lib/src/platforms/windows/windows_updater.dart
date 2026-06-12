@@ -11,7 +11,10 @@ import 'package:flutter_app_icons_generator/src/core/platform_updater.dart';
 /// initialized), the updater gracefully skips.
 class WindowsUpdater implements PlatformUpdater {
   /// The expected icon reference in `Runner.rc`.
-  static const String _expectedIconRef = r'resources\app_icon.ico';
+  ///
+  /// Uses escaped backslash (`\\`) because `.rc` files follow C-style string
+  /// escaping rules where `\` is the escape character.
+  static const String _expectedIconRef = r'resources\\app_icon.ico';
 
   /// Path to `Runner.rc` relative to the project root.
   static const String _runnerRcPath = 'windows/runner/Runner.rc';
@@ -33,7 +36,7 @@ class WindowsUpdater implements PlatformUpdater {
     }
   }
 
-  /// Ensures `IDI_APP_ICON ICON` references `resources\app_icon.ico`.
+  /// Ensures `IDI_APP_ICON ICON` references `resources\\app_icon.ico`.
   ///
   /// If the line exists but references a different file, it is replaced.
   /// If the pattern is not found at all, this may be a custom setup and
@@ -53,11 +56,7 @@ class WindowsUpdater implements PlatformUpdater {
     final match = iconPattern.firstMatch(content)!;
     final currentPath = match.group(2)!;
 
-    // Normalize backslashes for comparison.
-    final normalizedCurrent = currentPath.replaceAll('/', r'\');
-    final normalizedExpected = _expectedIconRef.replaceAll('/', r'\');
-
-    if (normalizedCurrent == normalizedExpected) {
+    if (currentPath == _expectedIconRef) {
       // Already correct — no changes needed.
       return content;
     }

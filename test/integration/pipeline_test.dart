@@ -225,10 +225,10 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       expect(indexHtmlContent, contains('rel="icon"'));
       expect(indexHtmlContent, contains('favicon.ico'));
 
-      // Windows: Runner.rc references resources\app_icon.ico
+      // Windows: Runner.rc references resources\\app_icon.ico (escaped backslash)
       final runnerRcContent =
           File('${tempDir.path}/windows/runner/Runner.rc').readAsStringSync();
-      expect(runnerRcContent, contains(r'resources\app_icon.ico'));
+      expect(runnerRcContent, contains(r'resources\\app_icon.ico'));
 
       // Web: manifest.json exists with icons array
       final manifestJsonFile = File('${tempDir.path}/web/manifest.json');

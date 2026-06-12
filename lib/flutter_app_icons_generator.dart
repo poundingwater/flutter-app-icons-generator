@@ -22,6 +22,7 @@ export 'src/config/config_printer.dart';
 export 'src/flavors/flavor_model.dart';
 export 'src/flavors/flavor_parser.dart';
 export 'src/flavors/flavor_printer.dart';
+export 'src/flavors/flavor_dart_generator.dart';
 
 // CLI
 export 'src/cli/cli_runner.dart';

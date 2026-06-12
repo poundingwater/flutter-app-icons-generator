@@ -35,6 +35,7 @@ import 'package:flutter_app_icons_generator/src/platforms/windows/windows_update
 import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 import 'package:flutter_app_icons_generator/src/shared/exceptions.dart';
 import 'package:flutter_app_icons_generator/src/shared/launch_json_generator.dart';
+import 'package:flutter_app_icons_generator/src/flavors/flavor_dart_generator.dart';
 
 /// Default config file name.
 const String _configFileName = 'flutter_app_icons_generator.yml';
@@ -57,6 +58,7 @@ class CliRunner {
     Map<Platform, PlatformUpdater>? platformUpdaters,
     Map<Platform, SplashGenerator>? splashGenerators,
     LaunchJsonGenerator? launchJsonGenerator,
+    FlavorDartGenerator? flavorDartGenerator,
     String? Function()? promptOverride,
   })  : _configParser = configParser ?? const YamlConfigParser(),
         _configPrinter = configPrinter ?? YamlConfigPrinter(),
@@ -66,6 +68,8 @@ class CliRunner {
         _splashGenerators = splashGenerators ?? _defaultSplashGenerators(),
         _launchJsonGenerator =
             launchJsonGenerator ?? const LaunchJsonGenerator(),
+        _flavorDartGenerator =
+            flavorDartGenerator ?? const FlavorDartGenerator(),
         _promptOverride = promptOverride;
 
   final ConfigParser _configParser;
@@ -75,6 +79,7 @@ class CliRunner {
   final Map<Platform, PlatformUpdater> _platformUpdaters;
   final Map<Platform, SplashGenerator> _splashGenerators;
   final LaunchJsonGenerator _launchJsonGenerator;
+  final FlavorDartGenerator _flavorDartGenerator;
   final String? Function()? _promptOverride;
 
   /// Reads a line from stdin, or uses the override if provided.
@@ -225,6 +230,25 @@ class CliRunner {
 
     // Generate .vscode/launch.json for IDE support when flavors are configured.
     if (config.flavors.isNotEmpty) {
+      // Generate flavor Dart files (flavors.dart + main_<flavor>.dart).
+      final packageName = _resolvePackageName(projectRoot);
+      final dartResult = _flavorDartGenerator.generate(
+        projectRoot: projectRoot,
+        flavors: config.flavors.keys.toSet(),
+        packageName: packageName,
+      );
+      if (dartResult.hasCreatedFiles) {
+        for (final file in dartResult.createdFiles) {
+          logger.info('✓ Created $file');
+        }
+      }
+      if (dartResult.skippedFiles.isNotEmpty) {
+        for (final file in dartResult.skippedFiles) {
+          logger.verbose('  Skipped $file — already exists');
+        }
+      }
+
+      // Generate .vscode/launch.json.
       final wrote = _launchJsonGenerator.generate(
         projectRoot,
         config.flavors.keys.toSet(),
@@ -482,6 +506,24 @@ class CliRunner {
         imageOptimizer: imageOptimizer,
       ),
     };
+  }
+
+  /// Resolves the Dart package name from the project's `pubspec.yaml`.
+  ///
+  /// Falls back to the project directory name if pubspec can't be parsed.
+  String _resolvePackageName(String projectRoot) {
+    final pubspecFile = File('$projectRoot/pubspec.yaml');
+    if (pubspecFile.existsSync()) {
+      final content = pubspecFile.readAsStringSync();
+      // Simple regex extraction — avoids pulling in yaml dependency here.
+      final nameMatch = RegExp(r'^name:\s*(\S+)', multiLine: true)
+          .firstMatch(content);
+      if (nameMatch != null) {
+        return nameMatch.group(1)!;
+      }
+    }
+    // Fallback: use the directory name.
+    return Uri.parse(projectRoot).pathSegments.last;
   }
 
   /// Detects existing generated assets for the configured platforms.
