@@ -114,33 +114,25 @@ class IconConfig {
 
   /// Resolves the effective icon config for a given [platform].
   ///
-  /// For platforms that need transparency (Windows), the package will
-  /// use foreground-only. For others, it composites foreground onto background.
+  /// Delegates to [ConfigResolver] for intelligent hierarchical fallback.
+  /// Kept for backward compatibility; prefer [ConfigResolver.resolve] directly.
   ResolvedIconConfig resolve(Platform platform) {
-    // Check platform-specific override first.
+    // Inline import would be circular; replicate the cascade logic here
+    // for backward compat. New code should use ConfigResolver.resolve().
     final override = platformOverrides[platform];
-    if (override != null) {
-      return ResolvedIconConfig(
-        foregroundPath: override.foregroundPath,
-        background: override.background,
-        foregroundPadding: override.foregroundPadding ?? foregroundPadding,
-      );
-    }
 
-    // Fall back to top-level foreground/background.
-    if (foregroundPath != null) {
-      return ResolvedIconConfig(
-        foregroundPath: foregroundPath,
-        background: background,
-        foregroundPadding: foregroundPadding,
-      );
-    }
+    final resolvedForeground =
+        override?.foregroundPath ?? foregroundPath ?? allPlatforms;
+    final resolvedBackground =
+        override != null ? (override.background ?? background) : background;
+    final resolvedPadding = override != null
+        ? (override.foregroundPadding ?? foregroundPadding)
+        : foregroundPadding;
 
-    // Final fallback: all_platforms treated as foreground with no background.
     return ResolvedIconConfig(
-      foregroundPath: allPlatforms,
-      background: null,
-      foregroundPadding: foregroundPadding,
+      foregroundPath: resolvedForeground,
+      background: resolvedBackground,
+      foregroundPadding: resolvedPadding,
     );
   }
 
@@ -170,15 +162,19 @@ class IconConfig {
 }
 
 /// Platform-specific icon configuration override.
+///
+/// All fields are optional — unset fields inherit from the top-level
+/// [IconConfig] via [ConfigResolver.resolve].
 class PlatformIconConfig {
   const PlatformIconConfig({
-    required this.foregroundPath,
+    this.foregroundPath,
     this.background,
     this.foregroundPadding,
   });
 
   /// Platform-specific foreground image path.
-  final String foregroundPath;
+  /// Null means inherit from the top-level config.
+  final String? foregroundPath;
 
   /// Platform-specific background (optional).
   /// If null, foreground is used as-is (transparency preserved).

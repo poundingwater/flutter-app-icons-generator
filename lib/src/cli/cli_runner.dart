@@ -7,6 +7,7 @@ import 'package:flutter_app_icons_generator/src/cli/logger.dart';
 import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 import 'package:flutter_app_icons_generator/src/config/config_parser.dart';
 import 'package:flutter_app_icons_generator/src/config/config_printer.dart';
+import 'package:flutter_app_icons_generator/src/config/config_resolver.dart';
 import 'package:flutter_app_icons_generator/src/config/yaml_config_parser.dart';
 import 'package:flutter_app_icons_generator/src/core/asset_cleaner.dart';
 import 'package:flutter_app_icons_generator/src/core/icon_generator.dart';
@@ -338,7 +339,7 @@ class CliRunner {
     required Logger logger,
     required List<PlatformGenerationException> errors,
   }) async {
-    final resolvedIcon = iconConfig.resolve(platform);
+    final resolvedIcon = ConfigResolver.resolve(iconConfig, platform);
 
     // Validate sources
     if (resolvedIcon.foregroundPath == null) {

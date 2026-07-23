@@ -42,7 +42,9 @@ class YamlConfigPrinter implements ConfigPrinter {
     // Platform overrides
     for (final entry in config.icon.platformOverrides.entries) {
       buffer.writeln('  ${entry.key.name}:');
-      buffer.writeln('    foreground: ${entry.value.foregroundPath}');
+      if (entry.value.foregroundPath != null) {
+        buffer.writeln('    foreground: ${entry.value.foregroundPath}');
+      }
       if (entry.value.background != null) {
         final bgValue = _backgroundToString(entry.value.background!);
         buffer.writeln('    background: $bgValue');

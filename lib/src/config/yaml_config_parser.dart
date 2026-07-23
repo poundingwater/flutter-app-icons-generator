@@ -164,17 +164,23 @@ class YamlConfigParser implements ConfigParser {
       }
 
       final platformForeground = platformNode['foreground'] as String?;
-      if (platformForeground == null) {
-        throw ConfigValidationException(['icon.$platformKey.foreground']);
+      final platformBgValue = platformNode['background'];
+      final platformPadding = _parsePadding(platformNode['foreground_padding']);
+
+      // At least one field must be specified for a platform override to be meaningful.
+      if (platformForeground == null &&
+          platformBgValue == null &&
+          platformPadding == null) {
+        throw ConfigParseException(
+          '"icon.$platformKey" must specify at least one of: '
+          'foreground, background, foreground_padding',
+        );
       }
 
-      final platformBgValue = platformNode['background'];
       BackgroundConfig? platformBackground;
       if (platformBgValue != null) {
         platformBackground = _parseBackground(platformBgValue);
       }
-
-      final platformPadding = _parsePadding(platformNode['foreground_padding']);
 
       final platform = Platform.values.firstWhere((p) => p.name == platformKey);
       platformOverrides[platform] = PlatformIconConfig(
