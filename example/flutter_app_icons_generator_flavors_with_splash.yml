@@ -1,12 +1,15 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Example: App flavors (dev + prod)
+# Example: Flavors with per-flavor splash screens
 # ─────────────────────────────────────────────────────────────────────────────
-# Generate different icons per flavor for Android, iOS, and macOS.
-# Non-flavor platforms (web, linux, windows) use the top-level icon.
+# Each flavor can have its own splash configuration alongside the icon.
 
 icon:
   foreground: assets/foreground.png
   background: assets/background.png
+
+splash:
+  image: assets/foreground.png
+  background_color: "#FFFFFF"
 
 flavors:
   dev:
@@ -14,11 +17,17 @@ flavors:
     icon:
       foreground: assets/dev-foreground.png
       background: "#4CAF50"
+    splash:
+      image: assets/dev-foreground.png
+      background_color: "#E8F5E9"
   prod:
     bundle_identifier: com.example.myapp
     icon:
       foreground: assets/prod-foreground.png
       background: "#1e1e2e"
+    splash:
+      image: assets/prod-foreground.png
+      background_color: "#FAFAFA"
 
 platforms:
   - android

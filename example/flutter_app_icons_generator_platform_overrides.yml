@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Example: Platform-specific overrides
+# ─────────────────────────────────────────────────────────────────────────────
+# Override foreground, background, or padding per platform.
+# Unset fields inherit from the top-level icon config.
+
+icon:
+  foreground: assets/foreground.png
+  background: "#1e1e2e"
+  foreground_padding: 0.15
+
+  # Android: use a different background color and tighter padding
+  android:
+    background: "#4CAF50"
+    foreground_padding: 0.1
+
+  # iOS: use a different foreground image
+  ios:
+    foreground: assets/prod-foreground.png
+
+  # macOS: use an image background instead of color
+  macos:
+    background: assets/background.png
+    foreground_padding: 0.2
+
+  # Web: override all three
+  web:
+    foreground: assets/prod-foreground.png
+    background: "#FFFFFF"
+    foreground_padding: 0.0
+
+platforms:
+  - android
+  - ios
+  - macos
+  - web
+  - linux
+  - windows

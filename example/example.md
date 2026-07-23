@@ -55,7 +55,7 @@ Edit `flutter_app_icons_generator.yml`:
 
 ```yaml
 icon:
-  foreground: assets/icon_foreground.png
+  foreground: assets/foreground.png
   background: "#4CAF50" # hex color or path to image
   foreground_padding: 0.2 # optional — inset foreground by 20% per side (default: ~0.167)
 
@@ -100,7 +100,7 @@ Different icon per environment — fully automated build system configuration.
 
 ```yaml
 icon:
-  foreground: assets/icon_foreground.png
+  foreground: assets/foreground.png
   background: assets/background.png
 
 flavors:

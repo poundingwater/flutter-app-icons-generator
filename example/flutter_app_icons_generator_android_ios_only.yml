@@ -1,17 +1,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Example: Adaptive icon (foreground + color background)
+# Example: Android + iOS only (default platforms)
 # ─────────────────────────────────────────────────────────────────────────────
-# Generate adaptive icons for all platforms using a foreground layer composited
-# onto a solid color background.
+# When `platforms` is omitted, defaults to android and ios.
 
 icon:
   foreground: assets/foreground.png
-  background: "#4CAF50"
-
-platforms:
-  - android
-  - ios
-  - macos
-  - web
-  - linux
-  - windows
+  background: "#1e1e2e"

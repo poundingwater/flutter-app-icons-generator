@@ -1,24 +1,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Example: App flavors (dev + prod)
+# Example: Single image for all platforms (simplest)
 # ─────────────────────────────────────────────────────────────────────────────
-# Generate different icons per flavor for Android, iOS, and macOS.
-# Non-flavor platforms (web, linux, windows) use the top-level icon.
+# Use one pre-composited 1024x1024 image for every platform.
+# No adaptive layers, no compositing — just resize and output.
 
 icon:
-  foreground: assets/foreground.png
-  background: assets/background.png
-
-flavors:
-  dev:
-    bundle_identifier: com.example.myapp.dev
-    icon:
-      foreground: assets/dev-foreground.png
-      background: "#4CAF50"
-  prod:
-    bundle_identifier: com.example.myapp
-    icon:
-      foreground: assets/prod-foreground.png
-      background: "#1e1e2e"
+  all_platforms: assets/all-platforms.png
 
 platforms:
   - android

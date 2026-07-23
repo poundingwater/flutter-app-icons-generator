@@ -1,24 +1,18 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Example: App flavors (dev + prod)
+# Example: Foreground padding control
 # ─────────────────────────────────────────────────────────────────────────────
-# Generate different icons per flavor for Android, iOS, and macOS.
-# Non-flavor platforms (web, linux, windows) use the top-level icon.
+# Adjust how much the foreground is inset from the canvas edges.
+#
+# foreground_padding accepts:
+#   - A decimal fraction: 0.0 (no padding) to < 0.5
+#   - A percentage string: "20%" (equivalent to 0.2)
+#
+# Default is ~0.167 (Android's 72/108 safe zone ratio).
 
 icon:
   foreground: assets/foreground.png
-  background: assets/background.png
-
-flavors:
-  dev:
-    bundle_identifier: com.example.myapp.dev
-    icon:
-      foreground: assets/dev-foreground.png
-      background: "#4CAF50"
-  prod:
-    bundle_identifier: com.example.myapp
-    icon:
-      foreground: assets/prod-foreground.png
-      background: "#1e1e2e"
+  background: "#1e1e2e"
+  foreground_padding: 0.2
 
 platforms:
   - android

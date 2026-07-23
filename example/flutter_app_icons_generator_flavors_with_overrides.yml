@@ -1,8 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Example: App flavors (dev + prod)
+# Example: Flavors with platform-specific overrides
 # ─────────────────────────────────────────────────────────────────────────────
-# Generate different icons per flavor for Android, iOS, and macOS.
-# Non-flavor platforms (web, linux, windows) use the top-level icon.
+# Combine flavors with per-platform icon customization within each flavor.
 
 icon:
   foreground: assets/foreground.png
@@ -14,11 +13,20 @@ flavors:
     icon:
       foreground: assets/dev-foreground.png
       background: "#4CAF50"
+      foreground_padding: 0.2
+      android:
+        foreground_padding: 0.1
+      ios:
+        background: "#388E3C"
   prod:
     bundle_identifier: com.example.myapp
     icon:
       foreground: assets/prod-foreground.png
       background: "#1e1e2e"
+      foreground_padding: 0.15
+      macos:
+        background: assets/background.png
+        foreground_padding: 0.25
 
 platforms:
   - android
