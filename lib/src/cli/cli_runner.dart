@@ -1,5 +1,6 @@
 import 'dart:io' hide Platform;
 
+import 'package:args/args.dart';
 import 'package:flutter_app_icons_generator/src/cli/arg_parser.dart';
 import 'package:flutter_app_icons_generator/src/cli/console_logger.dart';
 import 'package:flutter_app_icons_generator/src/cli/default_factories.dart';
@@ -75,7 +76,7 @@ class CliRunner {
   ///
   /// Returns an exit code: 0 for success, 1 for errors.
   Future<int> run(List<String> arguments) async {
-    final args;
+    final ArgResults args;
     try {
       args = _argParser.build().parse(arguments);
     } on FormatException catch (e) {
