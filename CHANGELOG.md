@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2-dev]
+
+### Added
+
+- **`foreground_padding` config** — control how much the foreground is inset from the canvas edges (0.0–0.5), supports decimal fractions and percentage strings (e.g. `"20%"`)
+- **Example config files** — added all possible configuration examples in `example/` for reference (all_platforms, image background, padding, splash, platform overrides, flavors with overrides, flavors with splash)
+
+### Improved
+
+- **Config validation error messages** — collected all errors before throwing so users can fix them in one pass; clearer messaging for missing fields and invalid ranges
+
 ## [0.2.1-dev]
 
 ### Added
