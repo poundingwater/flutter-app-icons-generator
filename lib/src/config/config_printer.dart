@@ -101,10 +101,13 @@ icon:
   background: "#FFFFFF"  # hex color or image path
 
   # Foreground inset as fraction (0.0–0.5) or percentage. Default: ~0.167
-  # foreground_padding: 0.167
+  foreground_padding: 0.28
+
+  ios:
+    foreground_padding: 0.14
 
   # Platform-specific overrides (optional)
-  # ios:
+  # android:
   #   foreground: assets/ios_foreground.png
   #   background: "#FFFFFF"
   #   foreground_padding: 0.1

@@ -8,6 +8,7 @@ import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 import 'package:flutter_app_icons_generator/src/config/config_parser.dart';
 import 'package:flutter_app_icons_generator/src/config/config_printer.dart';
 import 'package:flutter_app_icons_generator/src/config/config_resolver.dart';
+import 'package:flutter_app_icons_generator/src/config/config_validator.dart';
 import 'package:flutter_app_icons_generator/src/config/yaml_config_parser.dart';
 import 'package:flutter_app_icons_generator/src/core/asset_cleaner.dart';
 import 'package:flutter_app_icons_generator/src/core/icon_generator.dart';
@@ -150,6 +151,14 @@ class CliRunner {
     final AppIconsConfig config;
     try {
       config = await _configParser.parse(projectRoot);
+    } on AppIconsException catch (e) {
+      logger.fatalError(e.message);
+      return e.exitCode;
+    }
+
+    // Validate config (centralized semantic checks).
+    try {
+      ConfigValidator.validate(config);
     } on AppIconsException catch (e) {
       logger.fatalError(e.message);
       return e.exitCode;

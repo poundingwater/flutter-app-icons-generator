@@ -9,6 +9,8 @@ import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 ///
 /// Each field is resolved independently, so a partial platform override
 /// (e.g. only `foreground_padding`) inherits remaining values from above.
+///
+/// Note: Validation is handled by [ConfigValidator] — this class purely resolves.
 class ConfigResolver {
   const ConfigResolver._();
 
@@ -36,8 +38,6 @@ class ConfigResolver {
     IconConfig icon,
     PlatformIconConfig? override,
   ) {
-    // Only fall back if override doesn't explicitly exist OR if
-    // override exists but has no background set (inherit from parent).
     if (override == null) return icon.background;
     return override.background ?? icon.background;
   }

@@ -82,45 +82,16 @@ class YamlConfigParser implements ConfigParser {
       throw ConfigValidationException(['icon']);
     }
 
-    // When flavors are configured, platforms that don't support flavors
-    // (web, linux, windows) still need a default icon config.
-    if (flavors.isNotEmpty) {
-      final nonFlavorPlatforms = platforms.where(
-        (p) =>
-            p != Platform.android && p != Platform.ios && p != Platform.macos,
-      );
-
-      if (nonFlavorPlatforms.isNotEmpty) {
-        final hasDefaultIcon = iconConfig != null &&
-            (iconConfig.allPlatforms != null ||
-                iconConfig.foregroundPath != null);
-        if (!hasDefaultIcon) {
-          throw ConfigValidationException([
-            'icon (required for platforms that do not support flavors: '
-                '${nonFlavorPlatforms.map((p) => p.name).join(", ")})',
-          ]);
-        }
-      }
-    }
-
     // Default icon config if missing (only allowed when flavors are present
     // and all platforms support flavors)
     iconConfig ??= const IconConfig();
 
-    final config = AppIconsConfig(
+    return AppIconsConfig(
       icon: iconConfig,
       splash: splashConfig,
       flavors: flavors,
       platforms: platforms,
     );
-
-    if (!config.isValid && flavors.isEmpty) {
-      throw ConfigValidationException([
-        'icon.all_platforms or icon.foreground',
-      ]);
-    }
-
-    return config;
   }
 
   /// Parses the `icon` section of the YAML config.
@@ -209,10 +180,11 @@ class YamlConfigParser implements ConfigParser {
     }
   }
 
-  /// Parses an optional foreground_padding value (0.0–1.0).
+  /// Parses an optional foreground_padding value.
   ///
   /// Accepts numeric values or percentage strings (e.g. "20%").
-  /// Returns null if not provided. Throws if out of range.
+  /// Returns null if not provided.
+  /// Range validation is handled by [ConfigValidator].
   double? _parsePadding(dynamic value) {
     if (value == null) return null;
 
@@ -222,12 +194,6 @@ class YamlConfigParser implements ConfigParser {
       parsed = double.parse(str.substring(0, str.length - 1)) / 100.0;
     } else {
       parsed = double.parse(str);
-    }
-
-    if (parsed < 0.0 || parsed >= 0.5) {
-      throw ConfigParseException(
-        'foreground_padding must be between 0.0 and 0.5 (exclusive), got $parsed',
-      );
     }
 
     return parsed;
