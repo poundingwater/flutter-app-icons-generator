@@ -57,6 +57,7 @@ Edit `flutter_app_icons_generator.yml`:
 icon:
   foreground: assets/icon_foreground.png
   background: "#4CAF50" # hex color or path to image
+  foreground_padding: 0.2 # optional — inset foreground by 20% per side (default: ~0.167)
 
 platforms:
   - android
@@ -108,6 +109,7 @@ flavors:
     icon:
       foreground: assets/dev-foreground.png
       background: "#4CAF50"
+      foreground_padding: 0.15
   prod:
     bundle_identifier: com.example.myapp
     icon:
@@ -162,6 +164,7 @@ flutter build ios --flavor prod
 | **Adaptive** (recommended) | `foreground` + `background` | You have a logo and want platform-optimized icons |
 | **Simple**                 | `all_platforms: path.png`   | You have a pre-composited square icon             |
 | **Platform override**      | `icon.ios.foreground`       | You need a different look on a specific platform  |
+| **Custom padding**         | `foreground_padding: 0.2`   | Control how much the foreground is inset          |
 
 ### Platform Behavior
 
