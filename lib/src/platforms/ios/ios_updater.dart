@@ -5,6 +5,7 @@ import 'package:flutter_app_icons_generator/src/flavors/flavor_model.dart';
 import 'package:flutter_app_icons_generator/src/platforms/ios/ios_pbxproj_patcher.dart';
 import 'package:flutter_app_icons_generator/src/platforms/ios/ios_scheme_generator.dart';
 import 'package:flutter_app_icons_generator/src/platforms/ios/ios_xcconfig_generator.dart';
+import 'package:flutter_app_icons_generator/src/shared/podfile/podfile_flavor_patcher.dart';
 
 /// Updates the iOS Xcode project for icon generation.
 ///
@@ -55,5 +56,6 @@ class IosUpdater implements PlatformUpdater {
     IosXcconfigGenerator().generate(projectRoot, flavors);
     IosSchemeGenerator().generate(projectRoot, flavors.keys.toSet());
     IosPbxprojPatcher().patch(projectRoot, flavors.keys.toSet());
+    PodfileFlavorPatcher().patch('$projectRoot/ios/Podfile', flavors.keys.toSet());
   }
 }

@@ -33,6 +33,9 @@ class FlavorPrinter {
         buffer.writeln(
             '      background: ${backgroundToString(icon.background!)}');
       }
+      if (icon.foregroundPadding != null) {
+        buffer.writeln('      foreground_padding: ${icon.foregroundPadding}');
+      }
 
       for (final override in icon.platformOverrides.entries) {
         buffer.writeln('      ${override.key.name}:');
@@ -40,6 +43,10 @@ class FlavorPrinter {
         if (override.value.background != null) {
           buffer.writeln(
               '        background: ${backgroundToString(override.value.background!)}');
+        }
+        if (override.value.foregroundPadding != null) {
+          buffer.writeln(
+              '        foreground_padding: ${override.value.foregroundPadding}');
         }
       }
 

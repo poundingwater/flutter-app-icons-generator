@@ -82,6 +82,7 @@ class IconConfig {
     this.allPlatforms,
     this.foregroundPath,
     this.background,
+    this.foregroundPadding,
     this.platformOverrides = const {},
   });
 
@@ -93,6 +94,17 @@ class IconConfig {
 
   /// Top-level background — either an image path or hex color.
   final BackgroundConfig? background;
+
+  /// Foreground padding as a fraction (0.0–1.0) of the canvas size.
+  ///
+  /// Controls how much the foreground is inset from the edges when
+  /// composited onto a background. Default is ~0.167 (Android's 72/108
+  /// safe zone ratio = 16.7% padding per side).
+  ///
+  /// - `0.0` — foreground fills the entire canvas (no padding)
+  /// - `0.5` — foreground is 0% of canvas (invisible, extreme)
+  /// - Typical values: 0.1–0.25
+  final double? foregroundPadding;
 
   /// Platform-specific overrides.
   final Map<Platform, PlatformIconConfig> platformOverrides;
@@ -111,6 +123,7 @@ class IconConfig {
       return ResolvedIconConfig(
         foregroundPath: override.foregroundPath,
         background: override.background,
+        foregroundPadding: override.foregroundPadding ?? foregroundPadding,
       );
     }
 
@@ -119,6 +132,7 @@ class IconConfig {
       return ResolvedIconConfig(
         foregroundPath: foregroundPath,
         background: background,
+        foregroundPadding: foregroundPadding,
       );
     }
 
@@ -126,6 +140,7 @@ class IconConfig {
     return ResolvedIconConfig(
       foregroundPath: allPlatforms,
       background: null,
+      foregroundPadding: foregroundPadding,
     );
   }
 
@@ -140,12 +155,13 @@ class IconConfig {
     return allPlatforms == other.allPlatforms &&
         foregroundPath == other.foregroundPath &&
         background == other.background &&
+        foregroundPadding == other.foregroundPadding &&
         _mapEquals(platformOverrides, other.platformOverrides);
   }
 
   @override
   int get hashCode =>
-      Object.hash(allPlatforms, foregroundPath, background, platformOverrides);
+      Object.hash(allPlatforms, foregroundPath, background, foregroundPadding, platformOverrides);
 
   @override
   String toString() =>
@@ -158,6 +174,7 @@ class PlatformIconConfig {
   const PlatformIconConfig({
     required this.foregroundPath,
     this.background,
+    this.foregroundPadding,
   });
 
   /// Platform-specific foreground image path.
@@ -167,20 +184,25 @@ class PlatformIconConfig {
   /// If null, foreground is used as-is (transparency preserved).
   final BackgroundConfig? background;
 
+  /// Platform-specific foreground padding override (0.0–1.0).
+  /// If null, falls back to the top-level [IconConfig.foregroundPadding].
+  final double? foregroundPadding;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! PlatformIconConfig) return false;
     return foregroundPath == other.foregroundPath &&
-        background == other.background;
+        background == other.background &&
+        foregroundPadding == other.foregroundPadding;
   }
 
   @override
-  int get hashCode => Object.hash(foregroundPath, background);
+  int get hashCode => Object.hash(foregroundPath, background, foregroundPadding);
 
   @override
   String toString() =>
-      'PlatformIconConfig(foregroundPath: $foregroundPath, background: $background)';
+      'PlatformIconConfig(foregroundPath: $foregroundPath, background: $background, foregroundPadding: $foregroundPadding)';
 }
 
 /// Resolved icon configuration for a specific platform.
@@ -192,6 +214,7 @@ class ResolvedIconConfig {
   const ResolvedIconConfig({
     required this.foregroundPath,
     this.background,
+    this.foregroundPadding,
   });
 
   /// Path to the foreground/source image.
@@ -199,6 +222,17 @@ class ResolvedIconConfig {
 
   /// Background config. Null means use foreground only (transparent).
   final BackgroundConfig? background;
+
+  /// Foreground padding fraction (0.0–1.0). Null means use the default
+  /// 72/108 ratio (~0.167 per side).
+  final double? foregroundPadding;
+
+  /// The effective content scale factor (1.0 - 2*padding).
+  /// E.g., padding 0.167 → content occupies 66.6% of canvas.
+  double get contentScale {
+    final padding = foregroundPadding ?? (1.0 - 72.0 / 108.0);
+    return (1.0 - 2.0 * padding).clamp(0.01, 1.0);
+  }
 
   /// Whether this resolved config has a background to composite onto.
   bool get hasBackground => background != null;

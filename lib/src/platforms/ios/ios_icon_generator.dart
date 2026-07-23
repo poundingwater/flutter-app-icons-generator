@@ -48,7 +48,11 @@ class IosIconGenerator implements IconGenerator {
     // Composite onto background if provided, otherwise use foreground directly.
     final img.Image sourceImage;
     if (config.hasBackground) {
-      sourceImage = await _compositeImage(foregroundImage, config.background!);
+      sourceImage = await _compositeImage(
+        foregroundImage,
+        config.background!,
+        contentScale: config.contentScale,
+      );
     } else {
       sourceImage = foregroundImage;
     }
@@ -86,13 +90,14 @@ class IosIconGenerator implements IconGenerator {
 
   /// Composites the foreground onto the background with padding.
   ///
-  /// Applies a content inset so the foreground doesn't fill edge-to-edge.
-  /// Uses the same 72/108 ratio as Android's safe zone for visual consistency
-  /// across platforms (~66.67% content, ~16.7% padding per side).
+  /// Applies a content inset based on the configured foreground padding.
+  /// Default uses the same 72/108 ratio as Android's safe zone for visual
+  /// consistency across platforms (~66.67% content, ~16.7% padding per side).
   Future<img.Image> _compositeImage(
     img.Image foreground,
-    BackgroundConfig background,
-  ) async {
+    BackgroundConfig background, {
+    required double contentScale,
+  }) async {
     final canvasSize = foreground.width;
 
     final img.Image bgImage;
@@ -106,8 +111,8 @@ class IosIconGenerator implements IconGenerator {
     // Resize background to canvas size.
     final resizedBg = _imageProcessor.resize(bgImage, canvasSize, canvasSize);
 
-    // Scale foreground to 72/108 of canvas (safe zone ratio).
-    final contentSize = (canvasSize * 72) ~/ 108;
+    // Scale foreground based on configured padding.
+    final contentSize = (canvasSize * contentScale).round();
     final resizedFg = _imageProcessor.resize(
       foreground,
       contentSize,

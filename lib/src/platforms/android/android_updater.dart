@@ -105,12 +105,9 @@ class AndroidUpdater implements PlatformUpdater {
       '\n',
     );
 
-    // Remove existing productFlavors block.
-    final productFlavorsPattern = RegExp(
-      r'\s*productFlavors\s*\{[^}]*(?:\{[^}]*\}[^}]*)*\}\s*',
-      dotAll: true,
-    );
-    content = content.replaceFirst(productFlavorsPattern, '\n');
+    // Remove existing productFlavors block using brace-counting to
+    // correctly handle arbitrarily nested `create(...)` entries.
+    content = _removeBlockByBraceCounting(content, 'productFlavors');
 
     // Insert the new block after defaultConfig.
     final flavorsBlock = _buildProductFlavorsBlockKts(flavors);
@@ -196,12 +193,9 @@ class AndroidUpdater implements PlatformUpdater {
       '\n',
     );
 
-    // Remove existing productFlavors block.
-    final productFlavorsPattern = RegExp(
-      r'\s*productFlavors\s*\{[^}]*(?:\{[^}]*\}[^}]*)*\}\s*',
-      dotAll: true,
-    );
-    content = content.replaceFirst(productFlavorsPattern, '\n');
+    // Remove existing productFlavors block using brace-counting to
+    // correctly handle arbitrarily nested flavor entries.
+    content = _removeBlockByBraceCounting(content, 'productFlavors');
 
     // Insert new block.
     final flavorsBlock = _buildProductFlavorsBlockGroovy(flavors);
@@ -236,6 +230,47 @@ class AndroidUpdater implements PlatformUpdater {
 
     buffer.writeln('    }');
     return buffer.toString();
+  }
+
+  /// Removes a named block (e.g. `productFlavors { ... }`) from [content]
+  /// using brace-counting so that arbitrarily nested blocks are handled
+  /// correctly.
+  ///
+  /// Any leading whitespace before the block keyword and trailing whitespace
+  /// after the block's closing brace are also removed.
+  String _removeBlockByBraceCounting(String content, String blockName) {
+    final blockStart = RegExp('\\s*$blockName\\s*\\{');
+    final match = blockStart.firstMatch(content);
+    if (match == null) return content;
+
+    // Walk forward from the opening `{` counting braces.
+    final openBraceIndex = content.indexOf('{', match.start);
+    var depth = 0;
+    var endIndex = openBraceIndex;
+
+    for (var i = openBraceIndex; i < content.length; i++) {
+      final ch = content[i];
+      if (ch == '{') {
+        depth++;
+      } else if (ch == '}') {
+        depth--;
+        if (depth == 0) {
+          endIndex = i + 1;
+          break;
+        }
+      }
+    }
+
+    // Consume trailing whitespace / blank lines.
+    while (endIndex < content.length &&
+        (content[endIndex] == ' ' ||
+            content[endIndex] == '\t' ||
+            content[endIndex] == '\n' ||
+            content[endIndex] == '\r')) {
+      endIndex++;
+    }
+
+    return '${content.substring(0, match.start)}\n${content.substring(endIndex)}';
   }
 
   /// Ensures the `<application` tag has `android:icon="@mipmap/ic_launcher"`.

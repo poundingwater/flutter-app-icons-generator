@@ -21,7 +21,10 @@ class MacosPbxprojPatcher {
     var content = file.readAsStringSync();
 
     for (final flavorName in flavors) {
-      if (content.contains('name = "Debug-$flavorName"')) continue;
+      if (content.contains('name = "Debug-$flavorName"')) {
+        content = _updateExistingXcconfigReferences(content, flavorName);
+        continue;
+      }
       content = _addFlavorConfigurations(content, flavorName);
     }
 
@@ -42,21 +45,21 @@ class MacosPbxprojPatcher {
   String _addXcconfigFileRefs(
       String content, String flavorName, _FlavorIds ids) {
     final entries = [
-      '\t\t${ids.debugXcconfigRef} /* $flavorName-Debug.xcconfig */ = '
+      '\t\t${ids.debugXcconfigRef} /* Debug-$flavorName.xcconfig */ = '
           '{isa = PBXFileReference; lastKnownFileType = text.xcconfig; '
-          'name = "$flavorName-Debug.xcconfig"; '
-          'path = "Flutter/$flavorName-Debug.xcconfig"; '
-          'sourceTree = "<group>"; };',
-      '\t\t${ids.releaseXcconfigRef} /* $flavorName-Release.xcconfig */ = '
+          'name = "Debug-$flavorName.xcconfig"; '
+          'path = "Flutter/Debug-$flavorName.xcconfig"; '
+          'sourceTree = SOURCE_ROOT; };',
+      '\t\t${ids.releaseXcconfigRef} /* Release-$flavorName.xcconfig */ = '
           '{isa = PBXFileReference; lastKnownFileType = text.xcconfig; '
-          'name = "$flavorName-Release.xcconfig"; '
-          'path = "Flutter/$flavorName-Release.xcconfig"; '
-          'sourceTree = "<group>"; };',
-      '\t\t${ids.profileXcconfigRef} /* $flavorName-Profile.xcconfig */ = '
+          'name = "Release-$flavorName.xcconfig"; '
+          'path = "Flutter/Release-$flavorName.xcconfig"; '
+          'sourceTree = SOURCE_ROOT; };',
+      '\t\t${ids.profileXcconfigRef} /* Profile-$flavorName.xcconfig */ = '
           '{isa = PBXFileReference; lastKnownFileType = text.xcconfig; '
-          'name = "$flavorName-Profile.xcconfig"; '
-          'path = "Flutter/$flavorName-Profile.xcconfig"; '
-          'sourceTree = "<group>"; };',
+          'name = "Profile-$flavorName.xcconfig"; '
+          'path = "Flutter/Profile-$flavorName.xcconfig"; '
+          'sourceTree = SOURCE_ROOT; };',
     ];
 
     return content.replaceFirst(
@@ -89,9 +92,12 @@ class MacosPbxprojPatcher {
 
       final (newId, xcconfigRef, mode) = entry.value;
       final cloned = _cloneConfig(
-        content, sourceId, '$mode-$flavorName', newId,
+        content,
+        sourceId,
+        '$mode-$flavorName',
+        newId,
         baseConfigRef: xcconfigRef,
-        xcconfigName: '$flavorName-$mode.xcconfig',
+        xcconfigName: '$mode-$flavorName.xcconfig',
       );
       if (cloned != null) newConfigs.writeln(cloned);
     }
@@ -128,9 +134,12 @@ class MacosPbxprojPatcher {
 
       final (newId, xcconfigRef, mode) = entry.value;
       final cloned = _cloneConfig(
-        content, sourceId, '$mode-$flavorName', newId,
+        content,
+        sourceId,
+        '$mode-$flavorName',
+        newId,
         baseConfigRef: xcconfigRef,
-        xcconfigName: '$flavorName-$mode.xcconfig',
+        xcconfigName: '$mode-$flavorName.xcconfig',
       );
       if (cloned != null) newConfigs.writeln(cloned);
     }
@@ -215,8 +224,7 @@ class MacosPbxprojPatcher {
     return block;
   }
 
-  String _addToConfigLists(
-      String content, String flavorName, _FlavorIds ids) {
+  String _addToConfigLists(String content, String flavorName, _FlavorIds ids) {
     content = _appendToConfigList(content, 'PBXProject', [
       '${ids.projectDebug} /* Debug-$flavorName */',
       '${ids.projectProfile} /* Profile-$flavorName */',
@@ -265,6 +273,44 @@ class MacosPbxprojPatcher {
 
     return result;
   }
+
+  /// Updates existing flavor configuration file references in `project.pbxproj`
+  /// to use the new `[Mode]-[Flavor].xcconfig` naming scheme.
+  String _updateExistingXcconfigReferences(String content, String flavorName) {
+    final modes = ['Debug', 'Release', 'Profile'];
+
+    for (final mode in modes) {
+      final configPattern = RegExp(
+        r'\w+\s*/\*\s*' + mode + '-' + flavorName + r'\s*\*/\s*=\s*\{[^}]*?baseConfigurationReference\s*=\s*(\w+)\s*/\*([^*]*)\*/\s*;',
+        dotAll: true,
+      );
+
+      final matches = configPattern.allMatches(content);
+      if (matches.isEmpty) continue;
+
+      final refId = matches.first.group(1)!;
+
+      // Update baseConfigurationReference comments to the new name format
+      content = content.replaceAllMapped(
+        RegExp(r'baseConfigurationReference\s*=\s*' + refId + r'\s*/\*([^*]*)\*/\s*;'),
+        (match) => 'baseConfigurationReference = $refId /* $mode-$flavorName.xcconfig */;',
+      );
+
+      // Find and update the PBXFileReference line to point to the new filename and path
+      final fileRefPattern = RegExp(
+        refId + r'\s*/\*[^*]*\*/\s*=\s*\{isa\s*=\s*PBXFileReference;[^}]+?\};'
+      );
+
+      if (fileRefPattern.hasMatch(content)) {
+        content = content.replaceFirst(
+          fileRefPattern,
+          '$refId /* $mode-$flavorName.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = "$mode-$flavorName.xcconfig"; path = "Flutter/$mode-$flavorName.xcconfig"; sourceTree = SOURCE_ROOT; };',
+        );
+      }
+    }
+
+    return content;
+  }
 }
 
 /// Deterministic IDs for a single macOS flavor's artifacts.
@@ -300,8 +346,8 @@ class _FlavorIds {
     final h2 = (h * 0x5bd1e995) & 0xFFFFFFFF;
     final h3 = (h * 0x1b873593) & 0xFFFFFFFF;
     return '${h.toRadixString(16).padLeft(8, '0')}'
-        '${h2.toRadixString(16).padLeft(8, '0')}'
-        '${h3.toRadixString(16).padLeft(8, '0')}'
+            '${h2.toRadixString(16).padLeft(8, '0')}'
+            '${h3.toRadixString(16).padLeft(8, '0')}'
         .toUpperCase();
   }
 }

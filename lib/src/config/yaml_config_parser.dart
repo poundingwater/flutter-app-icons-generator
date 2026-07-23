@@ -144,6 +144,7 @@ class YamlConfigParser implements ConfigParser {
         (iconNode['all_platforms'] ?? iconNode['image']) as String?;
     final foregroundPath = iconNode['foreground'] as String?;
     final backgroundValue = iconNode['background'];
+    final foregroundPadding = _parsePadding(iconNode['foreground_padding']);
 
     BackgroundConfig? background;
     if (backgroundValue != null) {
@@ -173,10 +174,13 @@ class YamlConfigParser implements ConfigParser {
         platformBackground = _parseBackground(platformBgValue);
       }
 
+      final platformPadding = _parsePadding(platformNode['foreground_padding']);
+
       final platform = Platform.values.firstWhere((p) => p.name == platformKey);
       platformOverrides[platform] = PlatformIconConfig(
         foregroundPath: platformForeground,
         background: platformBackground,
+        foregroundPadding: platformPadding,
       );
     }
 
@@ -184,6 +188,7 @@ class YamlConfigParser implements ConfigParser {
       allPlatforms: allPlatforms,
       foregroundPath: foregroundPath,
       background: background,
+      foregroundPadding: foregroundPadding,
       platformOverrides: platformOverrides,
     );
   }
@@ -196,6 +201,30 @@ class YamlConfigParser implements ConfigParser {
     } else {
       return BackgroundImage(bgStr);
     }
+  }
+
+  /// Parses an optional foreground_padding value (0.0–1.0).
+  ///
+  /// Accepts numeric values or percentage strings (e.g. "20%").
+  /// Returns null if not provided. Throws if out of range.
+  double? _parsePadding(dynamic value) {
+    if (value == null) return null;
+
+    double parsed;
+    final str = value.toString().trim();
+    if (str.endsWith('%')) {
+      parsed = double.parse(str.substring(0, str.length - 1)) / 100.0;
+    } else {
+      parsed = double.parse(str);
+    }
+
+    if (parsed < 0.0 || parsed >= 0.5) {
+      throw ConfigParseException(
+        'foreground_padding must be between 0.0 and 0.5 (exclusive), got $parsed',
+      );
+    }
+
+    return parsed;
   }
 
   /// Parses the optional `splash` section of the YAML config.

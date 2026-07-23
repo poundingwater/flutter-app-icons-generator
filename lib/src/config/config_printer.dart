@@ -2,31 +2,16 @@ import 'package:flutter_app_icons_generator/src/config/config_model.dart';
 import 'package:flutter_app_icons_generator/src/flavors/flavor_printer.dart';
 import 'package:flutter_app_icons_generator/src/shared/constants.dart';
 
-/// Abstract interface for serializing configuration to YAML format.
-///
-/// Used both for generating default configuration files (via --init) and
-/// for round-trip serialization of parsed configurations.
+/// Serializes [AppIconsConfig] to YAML format.
 abstract class ConfigPrinter {
   /// Serializes [config] to a YAML string.
-  ///
-  /// Produces a valid YAML representation that, when parsed back with
-  /// [ConfigParser], produces a semantically equivalent configuration.
   String print(AppIconsConfig config);
 
-  /// Generates a default configuration file with documentation comments.
-  ///
-  /// The output includes a header comment block explaining each
-  /// configuration field, supported values, and usage examples.
+  /// Generates a default YAML config template with inline documentation.
   String printDefault();
 }
 
-/// Concrete implementation of [ConfigPrinter] that produces YAML output.
-///
-/// The [print] method generates valid YAML that can be parsed back by the
-/// `YamlConfigParser` to produce a semantically equivalent [AppIconsConfig].
-///
-/// The [printDefault] method generates a fully commented YAML template
-/// suitable for use with the `--init` CLI flag.
+/// YAML implementation of [ConfigPrinter].
 class YamlConfigPrinter implements ConfigPrinter {
   /// Default platforms (android + ios).
   static const Set<Platform> _defaultPlatforms = {
@@ -50,6 +35,9 @@ class YamlConfigPrinter implements ConfigPrinter {
       final bgValue = _backgroundToString(config.icon.background!);
       buffer.writeln('  background: $bgValue');
     }
+    if (config.icon.foregroundPadding != null) {
+      buffer.writeln('  foreground_padding: ${config.icon.foregroundPadding}');
+    }
 
     // Platform overrides
     for (final entry in config.icon.platformOverrides.entries) {
@@ -58,6 +46,9 @@ class YamlConfigPrinter implements ConfigPrinter {
       if (entry.value.background != null) {
         final bgValue = _backgroundToString(entry.value.background!);
         buffer.writeln('    background: $bgValue');
+      }
+      if (entry.value.foregroundPadding != null) {
+        buffer.writeln('    foreground_padding: ${entry.value.foregroundPadding}');
       }
     }
 
@@ -97,73 +88,32 @@ class YamlConfigPrinter implements ConfigPrinter {
   @override
   String printDefault() {
     return '''# flutter_app_icons_generator.yml
-# Configuration for flutter_app_icons_generator — app icon & splash screen generator.
-#
-# For documentation, see: https://github.com/poundingwater/flutter-app-icons-generator
+# Docs: https://github.com/poundingwater/flutter-app-icons-generator
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Icon Configuration (required)
-# ─────────────────────────────────────────────────────────────────────────────
-#
-# You can configure icons in two ways:
-#
-# 1. SIMPLE MODE — one image for all platforms:
-#    Use `all_platforms` to provide a single pre-composited image.
-#
-# 2. ADAPTIVE MODE — separate foreground and background layers:
-#    Use `foreground` + `background` for maximum flexibility.
-#    The package composites them per platform automatically.
-#    - Platforms that need opaque icons (iOS, macOS, Linux): composited
-#    - Platforms that need transparency (Windows): foreground only
-#    - Android: uses layers natively for adaptive icons
-#
-# Image requirements:
-#   - Minimum size: 1024x1024 pixels
-#   - Supported formats: PNG, JPEG
-#   - For best results, use a square PNG with transparent background
-#     as foreground, and a solid color or image as background.
-#
+# Use `all_platforms` for a single image, or `foreground` + `background` for adaptive mode.
+# Minimum size: 1024x1024px | Formats: PNG, JPEG
 icon:
-  # Option 1: Single image for all platforms (simplest setup)
   # all_platforms: assets/icon.png
-
-  # Option 2: Separate foreground and background (recommended)
   foreground: assets/icon_foreground.png
-  background: "#FFFFFF"  # hex color (e.g. "#4CAF50") or image path
+  background: "#FFFFFF"  # hex color or image path
 
-  # ───────────────────────────────────────────────────────────────────────────
+  # Foreground inset as fraction (0.0–0.5) or percentage. Default: ~0.167
+  # foreground_padding: 0.167
+
   # Platform-specific overrides (optional)
-  # ───────────────────────────────────────────────────────────────────────────
-  #
-  # Override foreground/background for specific platforms when needed.
-  # Each platform override requires `foreground` and optionally `background`.
-  # If background is omitted, the foreground is used as-is (transparency preserved).
-  #
-  # Example: Use a different foreground for iOS
   # ios:
   #   foreground: assets/ios_foreground.png
   #   background: "#FFFFFF"
-  #
-  # Example: Web-specific icon optimized for small sizes
-  # web:
-  #   foreground: assets/web_icon.png
-  #   background: "#FFFFFF"
+  #   foreground_padding: 0.1
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Splash Screen Configuration (optional)
-# ─────────────────────────────────────────────────────────────────────────────
-#
+# Splash Screen (optional)
 # splash:
 #   image: assets/splash.png
 #   background_color: "#FFFFFF"
 ${FlavorPrinter.printDefaultExample()}
-# ─────────────────────────────────────────────────────────────────────────────
-# Target Platforms (optional — defaults to android and ios)
-# ─────────────────────────────────────────────────────────────────────────────
-#
-# Uncomment and add platforms you want to generate icons for.
+# Target Platforms (defaults to android and ios)
 # Supported: android, ios, macos, web, linux, windows
-#
 platforms:
   - android
   - ios
@@ -174,7 +124,7 @@ platforms:
 ''';
   }
 
-  /// Converts a [BackgroundConfig] to its YAML string representation.
+  /// Converts [BackgroundConfig] to its YAML string value.
   String _backgroundToString(BackgroundConfig background) {
     return switch (background) {
       BackgroundColor(hexColor: final color) => '"$color"',
@@ -183,8 +133,6 @@ platforms:
   }
 
   /// Compares two sets for equality.
-  static bool _setEquals<T>(Set<T> a, Set<T> b) {
-    if (a.length != b.length) return false;
-    return a.containsAll(b);
-  }
+  static bool _setEquals<T>(Set<T> a, Set<T> b) =>
+      a.length == b.length && a.containsAll(b);
 }

@@ -103,12 +103,14 @@ class AndroidIconGenerator implements IconGenerator {
     // (66.67%) is the guaranteed visible "safe zone". The outer 18dp on each
     // side is the parallax/crop area. We place the foreground within the safe
     // zone so it doesn't get clipped by device masks.
+    // When a custom foreground_padding is set, it overrides the default ratio.
+    final contentScale = config.contentScale;
     for (final entry in AndroidSizes.adaptiveSizes.entries) {
       final bucketDir = entry.key;
       final canvasSize = entry.value;
 
-      // The safe zone is 72/108 = 2/3 of the canvas.
-      final safeZoneSize = (canvasSize * 72) ~/ 108;
+      // The safe zone content size based on configured padding.
+      final safeZoneSize = (canvasSize * contentScale).round();
 
       // Resize the foreground to fit within the safe zone.
       final resizedForeground =
@@ -168,7 +170,7 @@ class AndroidIconGenerator implements IconGenerator {
   }
 
   /// Creates a composited image by layering the foreground onto the background
-  /// with safe-zone padding (72/108 ratio).
+  /// with safe-zone padding based on the configured content scale.
   Future<img.Image> _createCompositedImage(
     img.Image foregroundImage,
     ResolvedIconConfig config,
@@ -192,8 +194,8 @@ class AndroidIconGenerator implements IconGenerator {
     // Resize background to canvas size.
     final resizedBg = _imageProcessor.resize(bgImage, canvasSize, canvasSize);
 
-    // Scale foreground to 72/108 of canvas (safe zone ratio).
-    final contentSize = (canvasSize * 72) ~/ 108;
+    // Scale foreground based on configured padding.
+    final contentSize = (canvasSize * config.contentScale).round();
     final resizedFg = _imageProcessor.resize(
       foregroundImage,
       contentSize,

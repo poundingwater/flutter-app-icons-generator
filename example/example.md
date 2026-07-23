@@ -106,12 +106,12 @@ flavors:
   dev:
     bundle_identifier: com.example.myapp.dev
     icon:
-      foreground: assets/dev_foreground.png
+      foreground: assets/dev-foreground.png
       background: "#4CAF50"
   prod:
     bundle_identifier: com.example.myapp
     icon:
-      foreground: assets/prod_foreground.png
+      foreground: assets/prod-foreground.png
       background: "#1e1e2e"
 
 platforms:
