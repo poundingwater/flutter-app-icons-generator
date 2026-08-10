@@ -24,9 +24,8 @@ class MacosXcconfigGenerator {
     final appInfoInclude =
         hasAppInfo ? '#include "../Runner/Configs/AppInfo.xcconfig"\n' : '';
     final swiftVersion = SwiftVersionResolver().resolveMacos(projectRoot);
-    final swiftVersionLine = swiftVersion == null
-        ? ''
-        : 'SWIFT_VERSION = $swiftVersion\n';
+    final swiftVersionLine =
+        swiftVersion == null ? '' : 'SWIFT_VERSION = $swiftVersion\n';
 
     for (final entry in flavors.entries) {
       final name = entry.key;

@@ -58,8 +58,8 @@ class AppIconsConfig {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(icon, splash, _mapHash(flavors), Object.hashAllUnordered(platforms));
+  int get hashCode => Object.hash(
+      icon, splash, _mapHash(flavors), Object.hashAllUnordered(platforms));
 
   @override
   String toString() =>
@@ -152,8 +152,8 @@ class IconConfig {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(allPlatforms, foregroundPath, background, foregroundPadding, platformOverrides);
+  int get hashCode => Object.hash(allPlatforms, foregroundPath, background,
+      foregroundPadding, platformOverrides);
 
   @override
   String toString() =>
@@ -194,7 +194,8 @@ class PlatformIconConfig {
   }
 
   @override
-  int get hashCode => Object.hash(foregroundPath, background, foregroundPadding);
+  int get hashCode =>
+      Object.hash(foregroundPath, background, foregroundPadding);
 
   @override
   String toString() =>

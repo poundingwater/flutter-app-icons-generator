@@ -29,7 +29,8 @@ class MacosSplashGenerator implements SplashGenerator {
       'macos/Runner/Assets.xcassets/LaunchImage.imageset';
 
   @override
-  Future<void> generate(SplashConfig config, String projectRoot, {String? flavorName}) async {
+  Future<void> generate(SplashConfig config, String projectRoot,
+      {String? flavorName}) async {
     // Load the source splash image. the splash source image.
     final sourceImage = await imageProcessor.loadAndValidate(config.imagePath);
 

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_app_icons_generator/src/core/platform_updater.dart';
 import 'package:flutter_app_icons_generator/src/flavors/flavor_model.dart';
+import 'package:flutter_app_icons_generator/src/platforms/macos/macos_asset_catalog_linker.dart';
 import 'package:flutter_app_icons_generator/src/platforms/macos/macos_legacy_icon_cleaner.dart';
 import 'package:flutter_app_icons_generator/src/platforms/macos/macos_pbxproj_patcher.dart';
 import 'package:flutter_app_icons_generator/src/platforms/macos/macos_scheme_generator.dart';
@@ -14,6 +15,7 @@ import 'package:flutter_app_icons_generator/src/shared/podfile/podfile_flavor_pa
 /// 1. Removes legacy `.icns`-based icon setups (file and pbxproj refs).
 /// 2. Ensures `ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon` is present in
 ///    the Xcode project build settings.
+/// 3. Ensures `Assets.xcassets` is in the Resources build phase.
 ///
 /// The asset catalog approach (individual PNGs in `.appiconset`) is the
 /// modern Apple-recommended way to manage icons — Xcode generates the
@@ -33,6 +35,9 @@ class MacosUpdater implements PlatformUpdater {
   /// Handles detection and removal of legacy `.icns` icon artifacts.
   final MacosLegacyIconCleaner _legacyCleaner = MacosLegacyIconCleaner();
 
+  /// Ensures `Assets.xcassets` is wired into the Resources build phase.
+  final MacosAssetCatalogLinker _catalogLinker = MacosAssetCatalogLinker();
+
   @override
   Future<void> update(String projectRoot, {String? flavorName}) async {
     final pbxprojPath = '$projectRoot/macos/Runner.xcodeproj/project.pbxproj';
@@ -43,6 +48,10 @@ class MacosUpdater implements PlatformUpdater {
     // Remove any legacy .icns-based icon setup before applying asset catalog
     // configuration. This ensures Xcode uses the new .appiconset approach.
     _legacyCleaner.clean(projectRoot);
+
+    // Ensure Asset Catalog is in the Resources build phase so Xcode compiles
+    // it into the app bundle.
+    _catalogLinker.link(projectRoot);
 
     // When running with flavors, configureFlavors() handles everything.
     if (flavorName != null) return;
@@ -88,9 +97,13 @@ class MacosUpdater implements PlatformUpdater {
     // Clean legacy .icns artifacts before applying flavor configuration.
     _legacyCleaner.clean(projectRoot);
 
+    // Ensure Asset Catalog is in the Resources build phase.
+    _catalogLinker.link(projectRoot);
+
     MacosXcconfigGenerator().generate(projectRoot, flavors);
     MacosSchemeGenerator().generate(projectRoot, flavors.keys.toSet());
     MacosPbxprojPatcher().patch(projectRoot, flavors.keys.toSet());
-    PodfileFlavorPatcher().patch('$projectRoot/macos/Podfile', flavors.keys.toSet());
+    PodfileFlavorPatcher()
+        .patch('$projectRoot/macos/Podfile', flavors.keys.toSet());
   }
 }

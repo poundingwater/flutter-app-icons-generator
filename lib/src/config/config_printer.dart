@@ -50,7 +50,8 @@ class YamlConfigPrinter implements ConfigPrinter {
         buffer.writeln('    background: $bgValue');
       }
       if (entry.value.foregroundPadding != null) {
-        buffer.writeln('    foreground_padding: ${entry.value.foregroundPadding}');
+        buffer.writeln(
+            '    foreground_padding: ${entry.value.foregroundPadding}');
       }
     }
 
@@ -104,6 +105,8 @@ icon:
   foreground_padding: 0.28
 
   ios:
+    foreground_padding: 0.14
+  macos:
     foreground_padding: 0.14
 
   # Platform-specific overrides (optional)

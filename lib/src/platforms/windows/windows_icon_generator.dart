@@ -27,7 +27,8 @@ class WindowsIconGenerator implements IconGenerator {
   final DefaultImageOptimizer _imageOptimizer;
 
   @override
-  Future<void> generate(ResolvedIconConfig config, String projectRoot, {String? flavorName}) async {
+  Future<void> generate(ResolvedIconConfig config, String projectRoot,
+      {String? flavorName}) async {
     if (config.foregroundPath == null) {
       throw ArgumentError(
         'ResolvedIconConfig must have foregroundPath set.',

@@ -370,7 +370,11 @@ class IosPbxprojPatcher {
 
     for (final mode in modes) {
       final configPattern = RegExp(
-        r'\w+\s*/\*\s*' + mode + '-' + flavorName + r'\s*\*/\s*=\s*\{[^}]*?baseConfigurationReference\s*=\s*(\w+)\s*/\*([^*]*)\*/\s*;',
+        r'\w+\s*/\*\s*' +
+            mode +
+            '-' +
+            flavorName +
+            r'\s*\*/\s*=\s*\{[^}]*?baseConfigurationReference\s*=\s*(\w+)\s*/\*([^*]*)\*/\s*;',
         dotAll: true,
       );
 
@@ -381,14 +385,16 @@ class IosPbxprojPatcher {
 
       // Update baseConfigurationReference comments to the new name format
       content = content.replaceAllMapped(
-        RegExp(r'baseConfigurationReference\s*=\s*' + refId + r'\s*/\*([^*]*)\*/\s*;'),
-        (match) => 'baseConfigurationReference = $refId /* $mode-$flavorName.xcconfig */;',
+        RegExp(r'baseConfigurationReference\s*=\s*' +
+            refId +
+            r'\s*/\*([^*]*)\*/\s*;'),
+        (match) =>
+            'baseConfigurationReference = $refId /* $mode-$flavorName.xcconfig */;',
       );
 
       // Find and update the PBXFileReference line to point to the new filename and path
-      final fileRefPattern = RegExp(
-        refId + r'\s*/\*[^*]*\*/\s*=\s*\{isa\s*=\s*PBXFileReference;[^}]+?\};'
-      );
+      final fileRefPattern = RegExp(refId +
+          r'\s*/\*[^*]*\*/\s*=\s*\{isa\s*=\s*PBXFileReference;[^}]+?\};');
 
       if (fileRefPattern.hasMatch(content)) {
         content = content.replaceFirst(

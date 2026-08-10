@@ -7,7 +7,8 @@ void main() {
   late Directory tempDir;
 
   setUp(() {
-    tempDir = Directory.systemTemp.createTempSync('podfile_flavor_patcher_test_');
+    tempDir =
+        Directory.systemTemp.createTempSync('podfile_flavor_patcher_test_');
   });
 
   tearDown(() {

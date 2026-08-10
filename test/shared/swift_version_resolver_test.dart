@@ -10,7 +10,8 @@ void main() {
   late Directory tempDir;
 
   setUp(() {
-    tempDir = Directory.systemTemp.createTempSync('swift_version_resolver_test_');
+    tempDir =
+        Directory.systemTemp.createTempSync('swift_version_resolver_test_');
   });
 
   tearDown(() {
@@ -18,7 +19,8 @@ void main() {
   });
 
   void writeMinimalPbxproj(String platformFolder, String swiftVersion) {
-    final projectDir = Directory('${tempDir.path}/$platformFolder/Runner.xcodeproj');
+    final projectDir =
+        Directory('${tempDir.path}/$platformFolder/Runner.xcodeproj');
     projectDir.createSync(recursive: true);
 
     File('${projectDir.path}/project.pbxproj').writeAsStringSync('''
@@ -63,10 +65,12 @@ AAAAAAAABBBBBBBBCCCCCCCC /* Build configuration list for PBXNativeTarget "Runner
 
     IosXcconfigGenerator().generate(
       tempDir.path,
-      {'dev': const FlavorConfig(
-        icon: IconConfig(allPlatforms: 'icon.png'),
-        bundleIdentifier: 'com.example.dev',
-      )},
+      {
+        'dev': const FlavorConfig(
+          icon: IconConfig(allPlatforms: 'icon.png'),
+          bundleIdentifier: 'com.example.dev',
+        )
+      },
     );
 
     final generated = File('${tempDir.path}/ios/Flutter/Debug-dev.xcconfig')
@@ -80,10 +84,12 @@ AAAAAAAABBBBBBBBCCCCCCCC /* Build configuration list for PBXNativeTarget "Runner
 
     MacosXcconfigGenerator().generate(
       tempDir.path,
-      {'dev': const FlavorConfig(
-        icon: IconConfig(allPlatforms: 'icon.png'),
-        bundleIdentifier: 'com.example.dev',
-      )},
+      {
+        'dev': const FlavorConfig(
+          icon: IconConfig(allPlatforms: 'icon.png'),
+          bundleIdentifier: 'com.example.dev',
+        )
+      },
     );
 
     final generated = File('${tempDir.path}/macos/Flutter/Debug-dev.xcconfig')

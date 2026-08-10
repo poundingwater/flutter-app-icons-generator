@@ -159,7 +159,8 @@ IDI_APP_ICON ICON "resources\\\\old_icon.ico"
       // No standalone .icns file at macos/ level (asset catalog approach).
       final macosIcnsFile = File('${tempDir.path}/macos/AppIcon.icns');
       expect(macosIcnsFile.existsSync(), isFalse,
-          reason: 'Standalone .icns should not exist with asset catalog approach');
+          reason:
+              'Standalone .icns should not exist with asset catalog approach');
 
       // ===== Verify Web icons =====
       final webPath = '${tempDir.path}/web';

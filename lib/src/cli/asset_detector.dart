@@ -20,7 +20,8 @@ class AssetDetector {
 
       if (config.flavors.isNotEmpty && supportsFlavors) {
         for (final flavorName in config.flavors.keys) {
-          detected.addAll(_detectPlatformAssets(platform, projectRoot, flavorName));
+          detected
+              .addAll(_detectPlatformAssets(platform, projectRoot, flavorName));
         }
       } else {
         detected.addAll(_detectPlatformAssets(platform, projectRoot, null));

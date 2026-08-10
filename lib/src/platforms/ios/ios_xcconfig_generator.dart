@@ -18,9 +18,8 @@ class IosXcconfigGenerator {
     }
 
     final swiftVersion = SwiftVersionResolver().resolveIos(projectRoot);
-    final swiftVersionLine = swiftVersion == null
-        ? ''
-        : 'SWIFT_VERSION = $swiftVersion\n';
+    final swiftVersionLine =
+        swiftVersion == null ? '' : 'SWIFT_VERSION = $swiftVersion\n';
 
     for (final entry in flavors.entries) {
       final flavorName = entry.key;

@@ -168,8 +168,8 @@ FutureOr<void> main() async {
     // Add `import 'dart:async';` if not present.
     if (!content.contains("import 'dart:async'")) {
       // Insert at the top, before other imports.
-      final firstImportMatch = RegExp(r"^import\s+'", multiLine: true)
-          .firstMatch(content);
+      final firstImportMatch =
+          RegExp(r"^import\s+'", multiLine: true).firstMatch(content);
       if (firstImportMatch != null) {
         content = content.substring(0, firstImportMatch.start) +
             "import 'dart:async';\n\n" +

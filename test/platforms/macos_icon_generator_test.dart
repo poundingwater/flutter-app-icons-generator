@@ -107,8 +107,7 @@ void main() {
           reason: 'Standalone .icns should not be generated');
 
       // No .icns file inside the appiconset either.
-      final oldIcnsFile =
-          File('${tempDir.path}/$macosAssetPath/app_icon.icns');
+      final oldIcnsFile = File('${tempDir.path}/$macosAssetPath/app_icon.icns');
       expect(oldIcnsFile.existsSync(), isFalse,
           reason: 'No .icns file should be in the asset catalog');
     });
@@ -154,7 +153,8 @@ void main() {
 
       // Verify size and scale values for a specific entry.
       final entry16at2x = images.firstWhere(
-        (e) => (e as Map<String, dynamic>)['filename'] == 'app_icon_16x16@2x.png',
+        (e) =>
+            (e as Map<String, dynamic>)['filename'] == 'app_icon_16x16@2x.png',
       ) as Map<String, dynamic>;
       expect(entry16at2x['size'], equals('16x16'));
       expect(entry16at2x['scale'], equals('2x'));

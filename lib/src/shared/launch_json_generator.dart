@@ -87,9 +87,8 @@ class LaunchJsonGenerator {
 
     for (final mode in modes) {
       final modeName = mode[0].toUpperCase() + mode.substring(1);
-      final displayName = flavorName != null
-          ? '$flavorName $modeName'
-          : modeName;
+      final displayName =
+          flavorName != null ? '$flavorName $modeName' : modeName;
 
       final config = <String, dynamic>{
         'name': displayName,

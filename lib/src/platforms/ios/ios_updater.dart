@@ -56,6 +56,7 @@ class IosUpdater implements PlatformUpdater {
     IosXcconfigGenerator().generate(projectRoot, flavors);
     IosSchemeGenerator().generate(projectRoot, flavors.keys.toSet());
     IosPbxprojPatcher().patch(projectRoot, flavors.keys.toSet());
-    PodfileFlavorPatcher().patch('$projectRoot/ios/Podfile', flavors.keys.toSet());
+    PodfileFlavorPatcher()
+        .patch('$projectRoot/ios/Podfile', flavors.keys.toSet());
   }
 }

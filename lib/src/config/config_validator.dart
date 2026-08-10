@@ -123,8 +123,8 @@ class ConfigValidator {
 
     if (nonFlavorPlatforms.isEmpty) return;
 
-    final hasDefaultIcon = config.icon.allPlatforms != null ||
-        config.icon.foregroundPath != null;
+    final hasDefaultIcon =
+        config.icon.allPlatforms != null || config.icon.foregroundPath != null;
 
     if (!hasDefaultIcon) {
       errors.add(

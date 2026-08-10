@@ -12,5 +12,6 @@ abstract class IconGenerator {
   /// (foreground path + optional background after resolution).
   /// [projectRoot] is the root directory of the Flutter project.
   /// [flavorName] is the optional name of the flavor to generate icons for.
-  Future<void> generate(ResolvedIconConfig config, String projectRoot, {String? flavorName});
+  Future<void> generate(ResolvedIconConfig config, String projectRoot,
+      {String? flavorName});
 }

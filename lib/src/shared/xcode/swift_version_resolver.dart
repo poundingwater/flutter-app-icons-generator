@@ -52,8 +52,8 @@ class SwiftVersionResolver {
     final match = blockPattern.firstMatch(content);
     if (match == null) return null;
 
-    final versionMatch = RegExp(r'\n\s*SWIFT_VERSION = ([^;]+);')
-        .firstMatch(match.group(0)!);
+    final versionMatch =
+        RegExp(r'\n\s*SWIFT_VERSION = ([^;]+);').firstMatch(match.group(0)!);
     return versionMatch?.group(1)?.trim();
   }
 

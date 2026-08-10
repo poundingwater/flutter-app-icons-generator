@@ -186,8 +186,7 @@ class PipelineRunner {
       config.flavors.keys.toSet(),
     );
     if (wrote) {
-      logger
-          .info('✓ Generated .vscode/launch.json with flavor configurations');
+      logger.info('✓ Generated .vscode/launch.json with flavor configurations');
     } else {
       logger.verbose(
           '  Skipped launch.json — file exists with user modifications');

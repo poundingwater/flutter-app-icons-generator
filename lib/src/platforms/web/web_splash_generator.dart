@@ -36,7 +36,8 @@ class WebSplashGenerator implements SplashGenerator {
   static const int splashSize = 512;
 
   @override
-  Future<void> generate(SplashConfig config, String projectRoot, {String? flavorName}) async {
+  Future<void> generate(SplashConfig config, String projectRoot,
+      {String? flavorName}) async {
     // Load and validate the source splash image.
     final sourceImage = await imageProcessor.loadAndValidate(config.imagePath);
 

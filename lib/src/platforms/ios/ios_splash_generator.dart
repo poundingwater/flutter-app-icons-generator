@@ -30,12 +30,14 @@ class IosSplashGenerator implements SplashGenerator {
 
   /// The relative path within the project root for the iOS LaunchImage asset set.
   String _getAssetPath(String? flavorName) {
-    final splashName = flavorName != null ? 'LaunchImage-$flavorName' : 'LaunchImage';
+    final splashName =
+        flavorName != null ? 'LaunchImage-$flavorName' : 'LaunchImage';
     return 'ios/Runner/Assets.xcassets/$splashName.imageset';
   }
 
   @override
-  Future<void> generate(SplashConfig config, String projectRoot, {String? flavorName}) async {
+  Future<void> generate(SplashConfig config, String projectRoot,
+      {String? flavorName}) async {
     // Load the source splash image.
     final sourceImage = await _imageProcessor.loadAndValidate(config.imagePath);
 

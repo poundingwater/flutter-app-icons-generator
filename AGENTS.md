@@ -118,6 +118,14 @@ This project follows a **layered module architecture** with platform-specific ge
 - **Platform Isolation:** Each platform generator is self-contained. Adding a new platform means adding a new directory under `platforms/` without modifying existing platform code.
 - **Config-Driven:** All behavior is driven by the parsed YAML config model. No hardcoded paths or platform assumptions in core logic.
 
+### E. Native File Modification Policy
+
+- **No regex on structured formats.** Do not use regex-based string manipulation to modify `project.pbxproj`, `Info.plist`, or any XML/plist/AST-structured file.
+- **Plist files:** Use `package:xml` DOM parsing for all plist reads and writes.
+- **pbxproj files:** Use the structural parser in `lib/src/shared/xcode/` (once migrated). Until then, existing regex-based code is legacy — do not extend it, do not add new regex-based pbxproj modifications.
+- **New pbxproj work:** If a task requires modifying `project.pbxproj`, implement the structural parser first (see `_tasks/migrate-pbxproj-to-structural-parsing.md`).
+- **Rationale:** pbxproj is a NeXTSTEP ASCII plist with nested blocks and multiple targets. Regex cannot reliably scope to the correct target/section and has caused wrong-target insertion bugs.
+
 ### D. Testing Conventions
 
 - **Unit tests** mirror the `lib/src/` structure under `test/`.
@@ -159,6 +167,7 @@ make publish-dry-run # Validate package for pub.dev
 ```
 
 **CI Pipeline** (`.github/workflows/verify.yml`) runs on all PRs and pushes to `main`:
+
 1. `dart pub get`
 2. `dart format --output=none --set-exit-if-changed .`
 3. `dart analyze --fatal-infos --fatal-warnings`
